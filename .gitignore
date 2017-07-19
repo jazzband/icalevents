@@ -1,4 +1,5 @@
 calendars.txt
-.*
+.cache
+.idea
 */*.pyc
 *__pycache__*
