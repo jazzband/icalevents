@@ -1,9 +1,16 @@
+sudo: false
+
 language: python
+
 python:
   - "3.6"
+
 install:
   - pip install .
   - pip install -r requirements.txt
-  - codecov
 # command to run tests
-script: coverage run tests.py
+script:
+  - coverage run tests.py
+
+after_success:
+  - codecov
