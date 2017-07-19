@@ -2,6 +2,12 @@ from distutils.core import setup
 setup(
     name = 'icalevents',
     packages = ['icalevents'],
+    install_requires=[
+        "httplib2",
+        "icalendar",
+        "pytz",
+        "datetime",
+    ],
     version = '0.0.1',
     description = 'iCal downloader and parser',
     author = 'Thomas Irgang',
