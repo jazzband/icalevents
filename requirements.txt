@@ -3,3 +3,4 @@ icalendar
 pytz
 datetime
 coverage
+codecov
