@@ -1,0 +1,5 @@
+httplib2
+icalendar
+pytz
+datetime
+coverage
