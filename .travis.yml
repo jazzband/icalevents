@@ -16,3 +16,4 @@ script:
 
 after_success:
   - codecov
+  - coverage report -m
