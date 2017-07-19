@@ -4,3 +4,5 @@ calendars.txt
 *__pycache__*
 .idea/
 .coverage
+dist/*
+MANIFEST
