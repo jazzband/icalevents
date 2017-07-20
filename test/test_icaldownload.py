@@ -35,6 +35,12 @@ DTSTART:19180331T020000
         res = icalevents.icaldownload.apple_url_fix(data)
         self.assertEqual(res, expected, "fix url protocol")
 
+    def test_apple_url_fix_right(self):
+        data = "https://blah.blub/webcal/"
+
+        res = icalevents.icaldownload.apple_url_fix(data)
+        self.assertEqual(res, data, "no change")
+
     def test_data_from_file_google(self):
         file = "test/test_data/basic.ics"
         result = "test/test_data/basic_content.txt"

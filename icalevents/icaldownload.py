@@ -25,7 +25,7 @@ def apple_url_fix(url):
     :param url: URL to fix
     :return: fixed URL
     """
-    if url.startswith("webcal"):
+    if url.startswith("webcal://"):
         return url.replace('webcal://', 'http://', 1)
     else:
         return url
