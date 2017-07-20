@@ -218,7 +218,7 @@ def in_range(event_list, start, end):
     return filtered
 
 
-def parse_events(content, start=now(), end=now()+default_span):
+def parse_events(content, start=None, end=None):
     """
     Query the events occurring in a given time range.
 
@@ -227,6 +227,12 @@ def parse_events(content, start=now(), end=now()+default_span):
     :param end: end date for search
     :return: events as list
     """
+    if not start:
+        start = now()
+
+    if not end:
+        end = start + default_span
+
     if len(content) == 0:
         raise ValueError('Content is invalid!')
 

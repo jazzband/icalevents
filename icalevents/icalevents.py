@@ -33,12 +33,7 @@ def events(url=None, file=None, start=None, end=None, fix_apple=False):
     if not content and file:
         content = ICalDownload().data_from_file(file, apple_fix=fix_apple)
 
-    if start and end:
-        found_events += parse_events(content, start=start, end=end)
-    elif start:
-        found_events += parse_events(content, start=start)
-    else:
-        found_events += parse_events(content)
+    found_events += parse_events(content, start=start, end=end)
 
     return found_events
 
