@@ -144,7 +144,7 @@ def next_month_at(dt, count=1):
 
 def create_event(component):
     """
-    Create an event form its iCal representation.
+    Create an event from its iCal representation.
 
     :param component: iCal component
     :return: event
@@ -157,6 +157,7 @@ def create_event(component):
     event.start = event_start
     event.end = event_end
     event.summary = str(component.get('summary'))
+    event.description  = str(component.get('description'))
     event.all_day = type(component.get('dtstart').dt) is datetime.date
 
     return event

@@ -31,6 +31,17 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertEqual(len(evs), 2, "two events are found")
 
+    def test_event_attributes(self):
+        ical = "test/test_data/basic.ics"
+        start = date(2017, 7, 12)
+        end = date(2017, 7, 13)
+
+        ev = icalevents.events(url=None, file=ical, start=start, end=end)[0]
+
+        self.assertEqual(ev.summary, "graue Restmülltonne")
+        self.assertEqual(ev.description, "graue Restmülltonne nicht vergessen!")
+        self.assertFalse(ev.all_day)
+
     def test_events_async_url(self):
         url = "https://raw.githubusercontent.com/irgangla/icalevents/master/test/test_data/basic.ics"
         start = date(2017, 5, 18)
