@@ -39,5 +39,6 @@ time range.
 See: icalevents.icalevents.events(url=None, file=None, start=None, end=None, fix_apple=False)
 
 This version requires Python 3 or later.
+
 """
 )
