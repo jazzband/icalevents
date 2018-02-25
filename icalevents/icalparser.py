@@ -306,9 +306,9 @@ def create_recurring_events(start, end, component):
         if freq == 'DAILY':
             delta = timedelta(days=1)
         elif freq == 'WEEKLY':
-            by_day = set(rule.get('BYDAY'))
+            by_day = rule.get('BYDAY')
             if by_day:
-                day_deltas = generate_day_deltas_by_weekday(by_day)
+                day_deltas = generate_day_deltas_by_weekday(set(by_day))
             else:
                 delta = timedelta(days=7)
                 day_deltas = None
