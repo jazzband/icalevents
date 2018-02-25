@@ -88,3 +88,16 @@ class ICalParserTests(unittest.TestCase):
 
         self.assertEqual(len(filtered), 1, "one event is left")
         self.assertEqual(filtered[0], self.eventA, "event A is left")
+
+    def test_generate_day_deltas_by_weekday(self):
+        by_day = {'MO', 'WE', 'SU'}
+        result = icalevents.icalparser.generate_day_deltas_by_weekday(by_day)
+
+        self.assertEqual(2, result[0], 'Mon to Wed')
+        self.assertEqual(4, result[2], 'Wed to Sun')
+        self.assertEqual(1, result[6], 'Sun to Mon')
+
+        by_day = {'MO'}
+        result = icalevents.icalparser.generate_day_deltas_by_weekday(by_day)
+
+        self.assertEqual(7, result[0], 'Mon to Mon')

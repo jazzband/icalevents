@@ -306,10 +306,17 @@ def create_recurring_events(start, end, component):
         if freq == 'DAILY':
             delta = timedelta(days=1)
         elif freq == 'WEEKLY':
-            delta = timedelta(days=7)
+            by_day = rule.get('BYDAY')
+            if by_day:
+                day_deltas = generate_day_deltas_by_weekday(set(by_day))
+            else:
+                delta = timedelta(days=7)
+                day_deltas = None
         else:
             return
         while True:
+            if day_deltas is not None:
+                delta = timedelta(days=day_deltas.get(current.start.weekday()))
             current = current.copy_to(current.start + delta)
             if current.start < limit:
                 unfolded.append(current)
@@ -317,3 +324,36 @@ def create_recurring_events(start, end, component):
                 break
 
     return in_range(unfolded, start, end)
+
+
+def generate_day_deltas_by_weekday(by_day):
+    """
+    Create a dict to determine how many days to add to the current
+    event to get the next event when a WEEKLY rule contains a
+    BYDAY clause.
+
+    The resulting dictionary has the weekday number as keys and the
+    number of days to add to get the next event as values. Weekday
+    numbers are the same as those assigned by the date.weekday()
+    function.
+
+    :param by_day: list or set of two-letter weekday abbreviations
+    :return: dict mapping weekday numbers to day deltas
+    """
+    weekdays = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
+
+    selected_weekday_numbers = []
+    day_deltas = []
+    hop_count = 0
+    for weekday_number, weekday_name in enumerate(weekdays):
+        if weekday_name in by_day:
+            selected_weekday_numbers.append(weekday_number)
+            day_deltas.append(hop_count)
+            hop_count = 0
+        hop_count += 1
+
+    # readjust the first deltas to include the remaining deltas
+    first_hop_count = day_deltas[0] + hop_count
+    adjusted_deltas = day_deltas[1:] + [first_hop_count]
+
+    return dict(zip(selected_weekday_numbers, adjusted_deltas))
