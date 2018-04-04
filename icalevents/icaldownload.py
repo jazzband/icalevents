@@ -73,6 +73,12 @@ class ICalDownload:
 
         return self.decode(content, apple_fix=apple_fix)
 
+    def data_from_string(self, string_content, apple_fix=False):
+        if not string_content or len(string_content) == 0:
+            raise IOError("String content is not readable or is empty!")
+
+        return self.decode(string_content, apple_fix=apple_fix)
+
     def decode(self, content, apple_fix=False):
         """
         Decode content using the set charset.
