@@ -74,7 +74,23 @@ class ICalEventsTests(unittest.TestCase):
         end = date(2017, 5, 19)
         key = "basic"
 
-        icalevents.request_data(key, url=None, file=ical, start=start, end=end, fix_apple=False)
+        icalevents.request_data(key, url=None, file=ical, string_content=None, start=start, end=end, fix_apple=False)
+
+        self.assertTrue(icalevents.all_done(key), "request is finished")
+        self.assertEqual(len(icalevents.latest_events(key)), 2, "two events are found")
+
+    def test_string_data(self):
+        ical = "test/test_data/basic.ics"
+
+        with open(ical, mode='rb') as f:
+            string_content = f.read()
+
+        start = date(2017, 5, 18)
+        end = date(2017, 5, 19)
+        key = "basic"
+
+        icalevents.request_data(key, url=None, file=None, string_content=string_content, start=start, end=end,
+                                fix_apple=False)
 
         self.assertTrue(icalevents.all_done(key), "request is finished")
         self.assertEqual(len(icalevents.latest_events(key)), 2, "two events are found")
