@@ -158,7 +158,7 @@ def create_event(component):
     event.end = event_end
     event.summary = str(component.get('summary'))
     event.description  = str(component.get('description'))
-    event.all_day = type(component.get('dtstart').dt) is datetime.date
+    event.all_day = type(component.get('dtstart').dt) is date
 
     return event
 
