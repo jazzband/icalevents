@@ -40,7 +40,7 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertEqual(ev.summary, "graue Restmülltonne")
         self.assertEqual(ev.description, "graue Restmülltonne nicht vergessen!")
-        self.assertFalse(ev.all_day)
+        self.assertTrue(ev.all_day)
 
     def test_events_async_url(self):
         url = "https://raw.githubusercontent.com/irgangla/icalevents/master/test/test_data/basic.ics"
