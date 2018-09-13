@@ -8,7 +8,7 @@ setup(
         "pytz",
         "datetime",
     ],
-    version = '0.1.5',
+    version = '0.1.6',
     description = 'iCal downloader and parser',
     author = 'Thomas Irgang',
     author_email = 'thomas@irgang-la.de',
