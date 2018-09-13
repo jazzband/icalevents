@@ -17,6 +17,7 @@ after_success:
   - coverage report -m
 
 deploy:
+  skip_cleanup: true
   provider: pypi
   user: "irgang"
   password:
