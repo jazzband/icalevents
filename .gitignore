@@ -6,3 +6,4 @@ calendars.txt
 .coverage
 dist/*
 MANIFEST
+icalevents.egg-info/*
