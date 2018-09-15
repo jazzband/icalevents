@@ -53,7 +53,7 @@ class Event:
         :param other: other event
         :return: True if start of this event is smaller than other
         """
-        if not other or not type(other) is Event:
+        if not other or not isinstance(other, Event):
             raise ValueError('Only events can be compared with each other! Other is %s' % type(other))
         else:
             return self.start < other.start
@@ -121,7 +121,8 @@ def next_year_at(dt, count=1):
     :param count: number of years
     :return: date datetime
     """
-    return normalize(datetime(year=dt.year + count, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute,
+    return normalize(datetime(year=dt.year + count, month=dt.month, day=dt.day,
+                              hour=dt.hour, minute=dt.minute,
                               second=dt.second, microsecond=dt.microsecond))
 
 
@@ -140,8 +141,9 @@ def next_month_at(dt, count=1):
         month -= 12
         year += 1
 
-    return normalize(datetime(year=year, month=month, day=dt.day, hour=dt.hour, minute=dt.minute,
-                              second=dt.second, microsecond=dt.microsecond))
+    return normalize(datetime(year=year, month=month, day=dt.day, hour=dt.hour,
+                              minute=dt.minute, second=dt.second,
+                              microsecond=dt.microsecond))
 
 
 def create_event(component):
@@ -151,16 +153,14 @@ def create_event(component):
     :param component: iCal component
     :return: event
     """
-    event_start = normalize(component.get('dtstart').dt)
-    event_end = normalize(component.get('dtend').dt)
 
     event = Event()
 
-    event.start = event_start
-    event.end = event_end
+    event.start = normalize(component.get('dtstart').dt)
+    event.end = normalize(component.get('dtend').dt)
     event.summary = str(component.get('summary'))
-    event.description  = str(component.get('description'))
-    event.all_day = type(component.get('dtstart').dt) is date
+    event.description = str(component.get('description'))
+    event.all_day = isinstance(component.get('dtstart').dt, date)
 
     return event
 
@@ -172,10 +172,10 @@ def normalize(dt):
     :param dt: date to normalize
     :return: date as datetime with timezone
     """
-    if type(dt) is date:
+    if isinstance(dt, datetime):
+        pass
+    elif isinstance(dt, date):
         dt = datetime(dt.year, dt.month, dt.day, 0, 0)
-    elif type(dt) is datetime:
-        dt = dt
     else:
         raise ValueError("unknown type %s" % type(dt))
 
@@ -225,7 +225,7 @@ def parse_events(content, start=None, end=None):
     """
     Query the events occurring in a given time range.
 
-    :param  content: iCal URL/file content as String
+    :param content: iCal URL/file content as String
     :param start: start date for search, default today
     :param end: end date for search
     :return: events as list
@@ -236,7 +236,7 @@ def parse_events(content, start=None, end=None):
     if not end:
         end = start + default_span
 
-    if len(content) == 0:
+    if not content:
         raise ValueError('Content is invalid!')
 
     calendar = Calendar.from_ical(content)
@@ -261,7 +261,7 @@ def parse_events(content, start=None, end=None):
 
 def create_recurring_events(start, end, component):
     """
-    Unfold a reoccurring events to its occurrances into the given time frame.
+    Unfold a reoccurring event to its occurrances into the given time frame.
 
     :param start: start of the time frame
     :param end: end of the time frame
@@ -319,7 +319,7 @@ def create_recurring_events(start, end, component):
             day_deltas = None
 
         while True:
-            if day_deltas is not None:
+            if day_deltas:
                 delta = timedelta(days=day_deltas.get(current.start.weekday()))
             current = current.copy_to(current.start + delta)
             if current.start < limit:

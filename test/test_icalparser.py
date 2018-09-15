@@ -78,6 +78,19 @@ class ICalParserTests(unittest.TestCase):
         self.assertEqual(0, norm.microsecond, "microsecond")
         self.assertEqual(utc, norm.tzinfo, "timezone")
 
+        dt = datetime(year=2016, month=11, day=13, hour=1, minute=2, second=3)
+        norm = icalevents.icalparser.normalize(dt)
+
+        self.assertTrue(type(norm) is datetime, "type is datetime")
+        self.assertEqual(2016, norm.year, "year")
+        self.assertEqual(11, norm.month, "month")
+        self.assertEqual(13, norm.day, "day")
+        self.assertEqual(1, norm.hour, "hour")
+        self.assertEqual(2, norm.minute, "minute")
+        self.assertEqual(3, norm.second, "second")
+        self.assertEqual(0, norm.microsecond, "microsecond")
+        self.assertEqual(utc, norm.tzinfo, "timezone")
+
     def test_in_range(self):
         range_start = datetime(year=2017, month=2, day=2, hour=12, minute=0, tzinfo=utc)
         range_end = datetime(year=2017, month=2, day=4, hour=12, minute=0, tzinfo=utc)
