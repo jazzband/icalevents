@@ -114,3 +114,15 @@ class ICalParserTests(unittest.TestCase):
         result = icalevents.icalparser.generate_day_deltas_by_weekday(by_day)
 
         self.assertEqual(7, result[0], 'Mon to Mon')
+
+    def test_next_month_byday_delta(self):
+        dt = date(2018, 9, 15)
+
+        result = icalevents.icalparser.next_month_byday_delta(dt, "3SA")
+        self.assertEqual(date(2018, 10, 20), result, '3rd Saturday next month')
+
+        result = icalevents.icalparser.next_month_byday_delta(dt, "2TU")
+        self.assertEqual(date(2018, 10, 9), result, '2nd Tuesday next month')
+
+        with self.assertRaises(ValueError, msg='Invalid weekday'):
+            icalevents.icalparser.next_month_byday_delta(dt, "1ZZ")

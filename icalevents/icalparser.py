@@ -4,6 +4,7 @@ Parse iCal data to Events.
 # for UID generation
 from random import randint
 from datetime import datetime, timedelta, date
+from dateutil import relativedelta
 
 from icalendar import Calendar
 from pytz import utc
@@ -297,20 +298,29 @@ def create_recurring_events(start, end, component):
                 unfolded.append(current)
             else:
                 break
-    if freq == 'MONTHLY':
+    elif freq == 'MONTHLY':
+        by_day = rule.get('BYDAY')
+
         while True:
-            current = current.copy_to(next_month_at(current.start))
+            if by_day:
+                next_date = next_month_byday_delta(current.start, by_day[0])
+                current = current.copy_to(next_date)
+            else:
+                current = current.copy_to(next_month_at(current.start))
             if current.start < limit:
                 unfolded.append(current)
             else:
                 break
-    else:
-        if freq == 'DAILY':
-            delta = timedelta(days=1)
-        elif freq == 'WEEKLY':
-            delta = timedelta(days=7)
-        else:
-            return
+    elif freq == 'DAILY':
+        delta = timedelta(days=1)
+        while True:
+            current = current.copy_to(current.start + delta)
+            if current.start < limit:
+                unfolded.append(current)
+            else:
+                break
+    elif freq == 'WEEKLY':
+        delta = timedelta(days=7)
 
         by_day = rule.get('BYDAY')
         if by_day:
@@ -326,6 +336,8 @@ def create_recurring_events(start, end, component):
                 unfolded.append(current)
             else:
                 break
+    else:
+        return
 
     return in_range(unfolded, start, end)
 
@@ -361,3 +373,26 @@ def generate_day_deltas_by_weekday(by_day):
     adjusted_deltas = day_deltas[1:] + [first_hop_count]
 
     return dict(zip(selected_weekday_numbers, adjusted_deltas))
+
+
+def next_month_byday_delta(start_date, by_day):
+    """
+    Get the next event date when a MONTHLY rule contains a BYDAY clause,
+    e.g. 3SA = "Next third Saturday"
+    """
+
+    weekdays = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
+
+    number = int(by_day[0])
+    weekday = by_day[1:]
+
+    if weekday not in weekdays:
+        raise ValueError('Invalid weekday: {}'.format(weekday))
+
+    weekday = weekdays.index(weekday)
+    weekday_func = relativedelta.weekday(weekday)
+
+    delta = relativedelta.relativedelta(day=1, months=+1,
+                                        weekday=weekday_func(number))
+
+    return start_date + delta
