@@ -7,3 +7,4 @@ calendars.txt
 dist/*
 MANIFEST
 icalevents.egg-info/*
+/build
