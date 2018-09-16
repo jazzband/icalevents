@@ -6,6 +6,7 @@ from random import randint
 from datetime import datetime, timedelta, date
 
 from icalendar import Calendar
+from icalendar.prop import vDDDLists
 from pytz import utc
 
 
@@ -340,8 +341,11 @@ def extract_exdates(component):
     
     exd_prop = component.get('exdate')
     if exd_prop:
-        for exd_list in exd_prop:
-            dates.extend(exd.dt for exd in exd_list.dts if (exd))
+        if isinstance(exd_prop, list):
+            for exd_list in exd_prop:
+                dates.extend(exd.dt for exd in exd_list.dts)
+        elif isinstance(exd_prop, vDDDLists):
+            dates.extend(exd.dt for exd in exd_prop.dts)
     
     return dates
 
