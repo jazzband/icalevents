@@ -157,7 +157,7 @@ def create_event(component):
     event.end = normalize(component.get('dtend').dt)
     event.summary = str(component.get('summary'))
     event.description = str(component.get('description'))
-    event.all_day = isinstance(component.get('dtstart').dt, date)
+    event.all_day = type(component.get('dtstart').dt) is date
 
     return event
 
@@ -169,10 +169,10 @@ def normalize(dt):
     :param dt: date to normalize
     :return: date as datetime with timezone
     """
-    if isinstance(dt, datetime):
-        pass
-    elif isinstance(dt, date):
+    if type(dt) is date:
         dt = datetime(dt.year, dt.month, dt.day, 0, 0)
+    elif type(dt) is datetime:
+        pass
     else:
         raise ValueError("unknown type %s" % type(dt))
 
