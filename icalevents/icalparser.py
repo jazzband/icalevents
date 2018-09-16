@@ -122,7 +122,8 @@ def next_year_at(dt, count=1):
     :param count: number of years
     :return: date datetime
     """
-    return normalize(datetime(year=dt.year + count, month=dt.month, day=dt.day,
+    dt += relativedelta.relativedelta(years=+count)
+    return normalize(datetime(year=dt.year, month=dt.month, day=dt.day,
                               hour=dt.hour, minute=dt.minute,
                               second=dt.second, microsecond=dt.microsecond))
 
@@ -135,15 +136,10 @@ def next_month_at(dt, count=1):
     :param count: number of months
     :return: date datetime
     """
-    year = dt.year
-    month = dt.month + count
+    dt += relativedelta.relativedelta(months=+count)
 
-    while month > 12:
-        month -= 12
-        year += 1
-
-    return normalize(datetime(year=year, month=month, day=dt.day, hour=dt.hour,
-                              minute=dt.minute, second=dt.second,
+    return normalize(datetime(year=dt.year, month=dt.month, day=dt.day,
+                              hour=dt.hour, minute=dt.minute, second=dt.second,
                               microsecond=dt.microsecond))
 
 
