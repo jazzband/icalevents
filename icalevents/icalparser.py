@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, date
 from dateutil import relativedelta
 
 from icalendar import Calendar
+from icalendar.prop import vDDDLists
 from pytz import utc
 
 
@@ -335,7 +336,26 @@ def create_recurring_events(start, end, component):
     else:
         return
 
-    return in_range(unfolded, start, end)
+    reduced_range = in_range(unfolded, start, end)
+
+    exceptions = extract_exdates(component)
+    reduced_exceptions = [ev for ev in reduced_range if ev.start not in exceptions]
+
+    return reduced_exceptions
+
+
+def extract_exdates(component):
+    dates = []
+
+    exd_prop = component.get('exdate')
+    if exd_prop:
+        if isinstance(exd_prop, list):
+            for exd_list in exd_prop:
+                dates.extend(exd.dt for exd in exd_list.dts)
+        elif isinstance(exd_prop, vDDDLists):
+            dates.extend(exd.dt for exd in exd_prop.dts)
+
+    return dates
 
 
 def generate_day_deltas_by_weekday(by_day):
