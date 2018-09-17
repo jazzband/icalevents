@@ -345,6 +345,12 @@ def create_recurring_events(start, end, component):
 
 
 def extract_exdates(component):
+    """
+    Compile a list of all exception dates stored with a component.
+    
+    :param component: icalendar iCal component
+    :return: exception dates
+    """
     dates = []
 
     exd_prop = component.get('exdate')
