@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import unittest
 
 from test.test_icaldownload import *

@@ -1,7 +1,7 @@
+from threading import Lock, Thread
+
 from .icalparser import parse_events
 from .icaldownload import ICalDownload
-
-from threading import Lock, Thread
 
 
 # Lock for event data
@@ -35,7 +35,8 @@ def events(url=None, file=None, string_content=None, start=None, end=None, fix_a
         content = ICalDownload().data_from_file(file, apple_fix=fix_apple)
 
     if not content and string_content:
-        content = ICalDownload().data_from_string(string_content, apple_fix=fix_apple)
+        content = ICalDownload().data_from_string(string_content,
+                                                  apple_fix=fix_apple)
 
     found_events += parse_events(content, start=start, end=end)
 
@@ -57,13 +58,15 @@ def request_data(key, url, file, string_content, start, end, fix_apple):
     data = []
 
     try:
-        data += events(url=url, file=file, string_content=string_content, start=start, end=end, fix_apple=fix_apple)
+        data += events(url=url, file=file, string_content=string_content,
+                       start=start, end=end, fix_apple=fix_apple)
     finally:
         update_events(key, data)
         request_finished(key)
 
 
-def events_async(key, url=None, file=None, start=None, string_content=None, end=None, fix_apple=False):
+def events_async(key, url=None, file=None, start=None, string_content=None,
+                 end=None, fix_apple=False):
     """
     Trigger an asynchronous data request.
 
@@ -134,5 +137,4 @@ def all_done(key):
     with event_lock:
         if threads[key]:
             return False
-        else:
-            return True
+        return True

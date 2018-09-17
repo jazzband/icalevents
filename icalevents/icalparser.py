@@ -4,6 +4,7 @@ Parse iCal data to Events.
 # for UID generation
 from random import randint
 from datetime import datetime, timedelta, date
+from dateutil import relativedelta
 
 from icalendar import Calendar
 from icalendar.prop import vDDDLists
@@ -54,7 +55,7 @@ class Event:
         :param other: other event
         :return: True if start of this event is smaller than other
         """
-        if not other or not type(other) is Event:
+        if not other or not isinstance(other, Event):
             raise ValueError('Only events can be compared with each other! Other is %s' % type(other))
         else:
             return self.start < other.start
@@ -122,7 +123,9 @@ def next_year_at(dt, count=1):
     :param count: number of years
     :return: date datetime
     """
-    return normalize(datetime(year=dt.year + count, month=dt.month, day=dt.day, hour=dt.hour, minute=dt.minute,
+    dt += relativedelta.relativedelta(years=+count)
+    return normalize(datetime(year=dt.year, month=dt.month, day=dt.day,
+                              hour=dt.hour, minute=dt.minute,
                               second=dt.second, microsecond=dt.microsecond))
 
 
@@ -134,15 +137,11 @@ def next_month_at(dt, count=1):
     :param count: number of months
     :return: date datetime
     """
-    year = dt.year
-    month = dt.month + count
+    dt += relativedelta.relativedelta(months=+count)
 
-    while month > 12:
-        month -= 12
-        year += 1
-
-    return normalize(datetime(year=year, month=month, day=dt.day, hour=dt.hour, minute=dt.minute,
-                              second=dt.second, microsecond=dt.microsecond))
+    return normalize(datetime(year=dt.year, month=dt.month, day=dt.day,
+                              hour=dt.hour, minute=dt.minute, second=dt.second,
+                              microsecond=dt.microsecond))
 
 
 def create_event(component):
@@ -152,15 +151,13 @@ def create_event(component):
     :param component: iCal component
     :return: event
     """
-    event_start = normalize(component.get('dtstart').dt)
-    event_end = normalize(component.get('dtend').dt)
 
     event = Event()
 
-    event.start = event_start
-    event.end = event_end
+    event.start = normalize(component.get('dtstart').dt)
+    event.end = normalize(component.get('dtend').dt)
     event.summary = str(component.get('summary'))
-    event.description  = str(component.get('description'))
+    event.description = str(component.get('description'))
     event.all_day = type(component.get('dtstart').dt) is date
 
     return event
@@ -176,7 +173,7 @@ def normalize(dt):
     if type(dt) is date:
         dt = datetime(dt.year, dt.month, dt.day, 0, 0)
     elif type(dt) is datetime:
-        dt = dt
+        pass
     else:
         raise ValueError("unknown type %s" % type(dt))
 
@@ -226,7 +223,7 @@ def parse_events(content, start=None, end=None):
     """
     Query the events occurring in a given time range.
 
-    :param  content: iCal URL/file content as String
+    :param content: iCal URL/file content as String
     :param start: start date for search, default today
     :param end: end date for search
     :return: events as list
@@ -237,7 +234,7 @@ def parse_events(content, start=None, end=None):
     if not end:
         end = start + default_span
 
-    if len(content) == 0:
+    if not content:
         raise ValueError('Content is invalid!')
 
     calendar = Calendar.from_ical(content)
@@ -262,7 +259,7 @@ def parse_events(content, start=None, end=None):
 
 def create_recurring_events(start, end, component):
     """
-    Unfold a reoccurring events to its occurrances into the given time frame.
+    Unfold a reoccurring event to its occurrances into the given time frame.
 
     :param start: start of the time frame
     :param end: end of the time frame
@@ -298,20 +295,29 @@ def create_recurring_events(start, end, component):
                 unfolded.append(current)
             else:
                 break
-    if freq == 'MONTHLY':
+    elif freq == 'MONTHLY':
+        by_day = rule.get('BYDAY')
+
         while True:
-            current = current.copy_to(next_month_at(current.start))
+            if by_day:
+                next_date = next_month_byday_delta(current.start, by_day[0])
+                current = current.copy_to(next_date)
+            else:
+                current = current.copy_to(next_month_at(current.start))
             if current.start < limit:
                 unfolded.append(current)
             else:
                 break
-    else:
-        if freq == 'DAILY':
-            delta = timedelta(days=1)
-        elif freq == 'WEEKLY':
-            delta = timedelta(days=7)
-        else:
-            return
+    elif freq == 'DAILY':
+        delta = timedelta(days=1)
+        while True:
+            current = current.copy_to(current.start + delta)
+            if current.start < limit:
+                unfolded.append(current)
+            else:
+                break
+    elif freq == 'WEEKLY':
+        delta = timedelta(days=7)
 
         by_day = rule.get('BYDAY')
         if by_day:
@@ -320,16 +326,18 @@ def create_recurring_events(start, end, component):
             day_deltas = None
 
         while True:
-            if day_deltas is not None:
+            if day_deltas:
                 delta = timedelta(days=day_deltas.get(current.start.weekday()))
             current = current.copy_to(current.start + delta)
             if current.start < limit:
                 unfolded.append(current)
             else:
                 break
-    
+    else:
+        return
+
     reduced_range = in_range(unfolded, start, end)
-    
+
     exceptions = extract_exdates(component)
     reduced_exceptions = [ev for ev in reduced_range if ev.start not in exceptions]
 
@@ -338,7 +346,7 @@ def create_recurring_events(start, end, component):
 
 def extract_exdates(component):
     dates = []
-    
+
     exd_prop = component.get('exdate')
     if exd_prop:
         if isinstance(exd_prop, list):
@@ -346,7 +354,7 @@ def extract_exdates(component):
                 dates.extend(exd.dt for exd in exd_list.dts)
         elif isinstance(exd_prop, vDDDLists):
             dates.extend(exd.dt for exd in exd_prop.dts)
-    
+
     return dates
 
 
@@ -381,3 +389,26 @@ def generate_day_deltas_by_weekday(by_day):
     adjusted_deltas = day_deltas[1:] + [first_hop_count]
 
     return dict(zip(selected_weekday_numbers, adjusted_deltas))
+
+
+def next_month_byday_delta(start_date, by_day):
+    """
+    Get the next event date when a MONTHLY rule contains a BYDAY clause,
+    e.g. 3SA = "Next third Saturday"
+    """
+
+    weekdays = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
+
+    number = int(by_day[0])
+    weekday = by_day[1:]
+
+    if weekday not in weekdays:
+        raise ValueError('Invalid weekday: {}'.format(weekday))
+
+    weekday = weekdays.index(weekday)
+    weekday_func = relativedelta.weekday(weekday)
+
+    delta = relativedelta.relativedelta(day=1, months=+1,
+                                        weekday=weekday_func(number))
+
+    return start_date + delta

@@ -1,4 +1,8 @@
-from distutils.core import setup
+#!/usr/bin/env python3
+from setuptools import setup
+
+version = '0.1.8'
+
 setup(
     name = 'icalevents',
     packages = ['icalevents'],
@@ -8,12 +12,12 @@ setup(
         "pytz",
         "datetime",
     ],
-    version = '0.1.8',
+    version=version,
     description = 'iCal downloader and parser',
     author = 'Thomas Irgang',
     author_email = 'thomas@irgang-la.de',
     url = 'https://github.com/irgangla/icalevents',
-    download_url = 'https://github.com/irgangla/icalevents/archive/v0.0.1.tar.gz',
+    download_url = 'https://github.com/irgangla/icalevents/archive/v' + version + '.tar.gz',
     keywords = ['iCal'],
     classifiers = [
         'Programming Language :: Python',

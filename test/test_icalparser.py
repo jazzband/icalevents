@@ -27,6 +27,12 @@ class ICalParserTests(unittest.TestCase):
         self.assertTrue(type(n) == datetime, "result of now has type datetime")
         self.assertTrue(n.tzinfo, "result of now has a timezone info")
 
+    def test_time_left(self):
+        dt = datetime(year=2017, month=2, day=2, hour=11, minute=2, tzinfo=utc)
+        time_left = self.eventA.time_left(time=dt)
+        self.assertEqual(time_left.days, 1)
+        self.assertEqual(time_left.seconds, 3780)
+
     def test_event_copy_to(self):
         new_start = utc.normalize(datetime(year=2017, month=2, day=5, hour=12, minute=5, tzinfo=utc))
         eventC = self.eventA.copy_to(new_start)
@@ -34,8 +40,15 @@ class ICalParserTests(unittest.TestCase):
         self.assertNotEqual(eventC.uid, self.eventA.uid, "new event has new UID")
         self.assertEqual(eventC.start, new_start, "new event has new start")
         self.assertEqual(eventC.end - eventC.start, self.eventA.end - self.eventA.start, "new event has same duration")
-        self.assertEqual(eventC.all_day , False, "new event is no all day event")
+        self.assertEqual(eventC.all_day, False, "new event is no all day event")
         self.assertEqual(eventC.summary, self.eventA.summary, "copy to: summary")
+
+        eventD = eventC.copy_to()
+        self.assertNotEqual(eventD.uid, eventC.uid, "new event has new UID")
+        self.assertEqual(eventD.start, eventC.start, "new event has same start")
+        self.assertEqual(eventD.end, eventC.end, "new event has same end")
+        self.assertEqual(eventD.all_day, eventC.all_day, "new event is no all day event")
+        self.assertEqual(eventD.summary, eventC.summary, "copy to: summary")
 
     def test_event_order(self):
         self.assertTrue(self.eventA > self.eventB, "order of events")
@@ -78,6 +91,19 @@ class ICalParserTests(unittest.TestCase):
         self.assertEqual(0, norm.microsecond, "microsecond")
         self.assertEqual(utc, norm.tzinfo, "timezone")
 
+        dt = datetime(year=2016, month=11, day=13, hour=1, minute=2, second=3)
+        norm = icalevents.icalparser.normalize(dt)
+
+        self.assertTrue(type(norm) is datetime, "type is datetime")
+        self.assertEqual(2016, norm.year, "year")
+        self.assertEqual(11, norm.month, "month")
+        self.assertEqual(13, norm.day, "day")
+        self.assertEqual(1, norm.hour, "hour")
+        self.assertEqual(2, norm.minute, "minute")
+        self.assertEqual(3, norm.second, "second")
+        self.assertEqual(0, norm.microsecond, "microsecond")
+        self.assertEqual(utc, norm.tzinfo, "timezone")
+
     def test_in_range(self):
         range_start = datetime(year=2017, month=2, day=2, hour=12, minute=0, tzinfo=utc)
         range_end = datetime(year=2017, month=2, day=4, hour=12, minute=0, tzinfo=utc)
@@ -101,3 +127,15 @@ class ICalParserTests(unittest.TestCase):
         result = icalevents.icalparser.generate_day_deltas_by_weekday(by_day)
 
         self.assertEqual(7, result[0], 'Mon to Mon')
+
+    def test_next_month_byday_delta(self):
+        dt = date(2018, 9, 15)
+
+        result = icalevents.icalparser.next_month_byday_delta(dt, "3SA")
+        self.assertEqual(date(2018, 10, 20), result, '3rd Saturday next month')
+
+        result = icalevents.icalparser.next_month_byday_delta(dt, "2TU")
+        self.assertEqual(date(2018, 10, 9), result, '2nd Tuesday next month')
+
+        with self.assertRaises(ValueError, msg='Invalid weekday'):
+            icalevents.icalparser.next_month_byday_delta(dt, "1ZZ")
