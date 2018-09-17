@@ -155,7 +155,14 @@ def create_event(component):
     event = Event()
 
     event.start = normalize(component.get('dtstart').dt)
-    event.end = normalize(component.get('dtend').dt)
+    
+    if component.get('dtend'):
+        event.end = normalize(component.get('dtend').dt)
+    elif component.get('duration'):
+        event.end = event.start + component.get('duration').dt
+    else:
+        raise ValueError("Event has neither end, nor duration property.")
+    
     event.summary = str(component.get('summary'))
     event.description = str(component.get('description'))
     event.all_day = type(component.get('dtstart').dt) is date
