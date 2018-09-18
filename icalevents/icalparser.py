@@ -5,6 +5,8 @@ Parse iCal data to Events.
 from random import randint
 from datetime import datetime, timedelta, date
 from dateutil import relativedelta
+from dateutil.rrule import rrule, rruleset, rrulestr
+from warnings import warn
 
 from icalendar import Calendar
 from icalendar.prop import vDDDLists
@@ -262,6 +264,37 @@ def parse_events(content, start=None, end=None):
                 if e.end >= start and e.start <= end:
                     found.append(e)
     return found
+
+
+def parse_rrule(component):
+    if component.get('rrule'):
+        # Parse the rrule, might return a rruleset instance, instead of rrule
+        rule = rrulestr(component['rrule'].to_ical().decode())
+        
+        # Add the event's date as start date to each rule
+        if component.get('dtstart'):
+            dtstart = component['dtstart'].dt
+            if isinstance(rule, rrule):
+                rule = rule.replace(dtstart=dtstart)
+            elif isinstance(rule, rruleset):
+                for i in range(len(rule._rrule)):
+                    rule._rrule[i] = rule._rrule[i].replace(dtstart=dtstart)
+            elif __debug__:
+                warn("Unexpected rule type '{}'.".format(type(rule)))
+        
+        
+        if component.get('exdate'):
+            rules = rruleset()
+            rules.rrule(rule)
+            rule = rules
+            
+            for exd in extract_exdates(component):
+                rule.exdate(exd)
+#    else:
+#        rule = rruleset()
+#        rule.rdate(normalize(component.get('dtstart').dt))
+    
+    return rule
 
 
 def create_recurring_events(start, end, component):
