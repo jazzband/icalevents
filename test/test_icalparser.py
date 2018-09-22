@@ -1,7 +1,8 @@
 import unittest
 import icalevents.icalparser
 from datetime import datetime, date
-from pytz import utc
+from pytz import utc, timezone
+from dateutil.relativedelta import relativedelta
 
 
 class ICalParserTests(unittest.TestCase):
@@ -20,6 +21,9 @@ class ICalParserTests(unittest.TestCase):
         self.eventB.end = datetime(year=2017, month=2, day=1, hour=16, minute=5, tzinfo=utc)
         self.eventB.all_day = False
         self.eventB.summary = "Event B"
+        
+        self.dtA = datetime(2018, 6, 21, 12)
+        self.dtB = timezone('Europe/Berlin').localize(datetime(2018, 6, 21 ,12))
 
     def test_now(self):
         n = icalevents.icalparser.now()
@@ -42,6 +46,7 @@ class ICalParserTests(unittest.TestCase):
         self.assertEqual(eventC.end - eventC.start, self.eventA.end - self.eventA.start, "new event has same duration")
         self.assertEqual(eventC.all_day, False, "new event is no all day event")
         self.assertEqual(eventC.summary, self.eventA.summary, "copy to: summary")
+        self.assertEqual(eventC.description, self.eventA.description, "copy to: description")
 
         eventD = eventC.copy_to()
         self.assertNotEqual(eventD.uid, eventC.uid, "new event has new UID")
@@ -49,6 +54,7 @@ class ICalParserTests(unittest.TestCase):
         self.assertEqual(eventD.end, eventC.end, "new event has same end")
         self.assertEqual(eventD.all_day, eventC.all_day, "new event is no all day event")
         self.assertEqual(eventD.summary, eventC.summary, "copy to: summary")
+        self.assertEqual(eventD.description, eventC.description, "copy to: description")
 
     def test_event_order(self):
         self.assertTrue(self.eventA > self.eventB, "order of events")
@@ -139,3 +145,12 @@ class ICalParserTests(unittest.TestCase):
 
         with self.assertRaises(ValueError, msg='Invalid weekday'):
             icalevents.icalparser.next_month_byday_delta(dt, "1ZZ")
+    
+    def test_adjust_dst(self):
+        shift = relativedelta(months=12)
+        
+        shiftedA = self.dtA + shift
+        self.assertEqual(self.dtA.hour, icalevents.icalparser.adjust_dst(shiftedA).hour, "DST adjustment on naive datetime.")
+        
+        shiftedB = self.dtB + shift
+        self.assertEqual(self.dtB.hour, icalevents.icalparser.adjust_dst(shiftedB).hour, "DST adjustment on timezone aware datetime.")
