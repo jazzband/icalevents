@@ -258,11 +258,26 @@ def parse_events(content, start=None, end=None):
             if component.get('rrule'):
                 rule = parse_rrule(component)
                 dur = e.end - e.start
-                # Awful hack to adjust timezone throughout DST transitions.
-                found.extend(e.copy_to(dt.tzinfo.localize(dt.replace(tzinfo=None))) for dt in rule.between(start - dur, end, inc=True))
+                found.extend(e.copy_to(adjust_dst(dt)) for dt in rule.between(start - dur, end, inc=True))
             elif e.end >= start and e.start <= end:
                 found.append(e)
     return found
+
+
+# Awful hack to adjust timezone throughout DST transitions.
+def adjust_dst (dt):
+    """
+    Recomputes a datetime's UTC offset without changing the displayed value.
+    This is useful when shifting dates beyond DST transitions using dateutil's
+    relativedelta and rrule tools.
+    
+    :param dt: a datetime object
+    :return: adjusted datetime object
+    """
+    if dt.tzinfo:
+        return dt.tzinfo.localize(dt.replace(tzinfo=None))
+    else:
+        return dt
 
 
 def parse_rrule(component):
