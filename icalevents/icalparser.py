@@ -256,6 +256,7 @@ def parse_events(content, start=None, end=None):
         if component.name == "VEVENT":
             e = create_event(component)
             if component.get('rrule'):
+                # Unfold recurring events according to their rrule
                 rule = parse_rrule(component)
                 dur = e.end - e.start
                 found.extend(e.copy_to(adjust_dst(dt)) for dt in rule.between(start - dur, end, inc=True))
@@ -281,6 +282,14 @@ def adjust_dst (dt):
 
 
 def parse_rrule(component):
+    """
+    Extract a dateutil.rrule object from an icalendar component. Also includes
+    the component's dtstart and exdate properties. The rdate and exrule
+    properties are not yet supported.
+    
+    :param component: icalendar component
+    :return: extracted rrule or rruleset
+    """
     if component.get('rrule'):
         # Parse the rrule, might return a rruleset instance, instead of rrule
         rule = rrulestr(component['rrule'].to_ical().decode(), dtstart=normalize(component['dtstart'].dt))
@@ -292,6 +301,7 @@ def parse_rrule(component):
                 rules.rrule(rule)
                 rule = rules
             
+            # Add exdates to the rruleset
             for exd in extract_exdates(component):
                 rule.exdate(exd)
         
@@ -397,13 +407,13 @@ def extract_exdates(component):
     Compile a list of all exception dates stored with a component.
     
     :param component: icalendar iCal component
-    :return: exception dates
+    :return: list of exception dates
     """
     dates = []
 
     exd_prop = component.get('exdate')
     if exd_prop:
-        if isinstance(exd_prop, list):
+        if isinstance(exd_prop, list): # In case there is more than one exdate property
             for exd_list in exd_prop:
                 dates.extend(normalize(exd.dt) for exd in exd_list.dts)
         elif isinstance(exd_prop, vDDDLists):
