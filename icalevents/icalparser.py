@@ -6,7 +6,6 @@ from random import randint
 from datetime import datetime, timedelta, date
 from dateutil import relativedelta
 from dateutil.rrule import rrule, rruleset, rrulestr
-from warnings import warn
 
 from icalendar import Calendar
 from icalendar.prop import vDDDLists
@@ -255,44 +254,38 @@ def parse_events(content, start=None, end=None):
 
     for component in calendar.walk():
         if component.name == "VEVENT":
+            e = create_event(component)
             if component.get('rrule'):
-                es = create_recurring_events(start, end, component)
-                if es:
-                    found += es
-            else:
-                e = create_event(component)
-                if e.end >= start and e.start <= end:
-                    found.append(e)
+                rule = parse_rrule(component)
+                dur = e.end - e.start
+                # Awful hack to adjust timezone throughout DST transitions.
+                found.extend(e.copy_to(dt.tzinfo.localize(dt.replace(tzinfo=None))) for dt in rule.between(start - dur, end, inc=True))
+            elif e.end >= start and e.start <= end:
+                found.append(e)
     return found
 
 
 def parse_rrule(component):
     if component.get('rrule'):
         # Parse the rrule, might return a rruleset instance, instead of rrule
-        rule = rrulestr(component['rrule'].to_ical().decode())
-        
-        # Add the event's date as start date to each rule
-        if component.get('dtstart'):
-            dtstart = component['dtstart'].dt
-            if isinstance(rule, rrule):
-                rule = rule.replace(dtstart=dtstart)
-            elif isinstance(rule, rruleset):
-                for i in range(len(rule._rrule)):
-                    rule._rrule[i] = rule._rrule[i].replace(dtstart=dtstart)
-            elif __debug__:
-                warn("Unexpected rule type '{}'.".format(type(rule)))
-        
+        rule = rrulestr(component['rrule'].to_ical().decode(), dtstart=normalize(component['dtstart'].dt))
         
         if component.get('exdate'):
-            rules = rruleset()
-            rules.rrule(rule)
-            rule = rules
+            # Make sure, to work with a rruleset
+            if isinstance(rule, rrule):
+                rules = rruleset()
+                rules.rrule(rule)
+                rule = rules
             
             for exd in extract_exdates(component):
                 rule.exdate(exd)
-#    else:
-#        rule = rruleset()
-#        rule.rdate(normalize(component.get('dtstart').dt))
+        
+        #TODO: What about rdates and exrules?
+        
+    # You really want an rrule for a component without rrule? Here you are.
+    else:
+        rule = rruleset()
+        rule.rdate(normalize(component['dtstart'].dt))
     
     return rule
 
@@ -397,9 +390,9 @@ def extract_exdates(component):
     if exd_prop:
         if isinstance(exd_prop, list):
             for exd_list in exd_prop:
-                dates.extend(exd.dt for exd in exd_list.dts)
+                dates.extend(normalize(exd.dt) for exd in exd_list.dts)
         elif isinstance(exd_prop, vDDDLists):
-            dates.extend(exd.dt for exd in exd_prop.dts)
+            dates.extend(normalize(exd.dt) for exd in exd_prop.dts)
 
     return dates
 
