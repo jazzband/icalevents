@@ -152,7 +152,7 @@ def normalize(dt, tz=UTC):
     :return: date as datetime with timezone
     """
     if type(dt) is date:
-        dt = dt + relativedelta(hour=0, minute=0, second=0, microsecond=0)
+        dt = dt + relativedelta(hour=0)
     elif type(dt) is datetime:
         pass
     else:

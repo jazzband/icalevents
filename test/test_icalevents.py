@@ -1,6 +1,6 @@
 import unittest
 from icalevents import icalevents
-from datetime import date
+from datetime import date, timedelta
 from time import sleep
 
 
@@ -30,6 +30,23 @@ class ICalEventsTests(unittest.TestCase):
         evs = icalevents.events(url=None, file=ical, start=start, end=end)
 
         self.assertEqual(len(evs), 2, "two events are found")
+        
+    def test_events_recurring(self):
+        ical = "test/test_data/recurring.ics"
+        start = date(2018, 10, 15)
+        end = date(2018, 11, 15)
+        
+        evs = icalevents.events(file=ical, start=start, end=end)
+        
+        e1 = evs[1]
+        self.assertEqual(e1.start.hour, 10, "check time with DST")
+        self.assertEqual(e1.start.tzinfo.utcoffset(e1.start), timedelta(seconds=7200), "check UTC offset with DST")
+        
+        e2 = evs[2]
+        self.assertEqual(e2.start.hour, 10, "check time without DST")
+        self.assertEqual(e2.start.tzinfo.utcoffset(e2.start), timedelta(seconds=3600), "check UTC offset without DST")
+        
+        self.assertEqual(e2.start.day, 5, "Check observance of exdate.")
 
     def test_event_attributes(self):
         ical = "test/test_data/basic.ics"
