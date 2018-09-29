@@ -5,7 +5,7 @@ END:VTIMEZONE
 BEGIN:VEVENT
 DTSTART;TZID=Europe/Berlin:20181003T100000
 DTEND;TZID=Europe/Berlin:20181003T120000
-DESCRIPTION:Event recurring on wednesday each week
+DESCRIPTION:Event recurring on wednesday each week, except on 2018-10-29
 SUMARRY:Recurring event
 RRULE:FREQ=WEEKLY;BYDAY=MO
 EXDATE;TZID=Europe/Berlin:20181029T100000
