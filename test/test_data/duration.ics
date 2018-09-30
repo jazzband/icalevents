@@ -6,9 +6,14 @@ DESCRIPTION:Event with duration (1 day), instead of explicit end.
 SUMMARY:Duration Event
 END:VEVENT
 BEGIN:VEVENT
-DTSTART:20180120T100000
+DTSTART:20180115T100000
 DURATION:PT1H
 DESCRIPTION:Event with duration (1 hour), instead of explicit end.
 SUMMARY:Duration Event
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20180120T120000
+DESCRIPTION:Event without explicit dtend, nor duration property.
+SUMMARY:Short event
 END:VEVENT
 END:VCALENDAR

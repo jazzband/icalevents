@@ -45,6 +45,10 @@ class ICalEventsTests(unittest.TestCase):
         e2 = evs[1]
         self.assertEqual(e2.start.hour, 10, "explicit event start")
         self.assertEqual(e2.end.hour, 11, "implicit event end")
+
+        e3 = evs[2]
+        self.assertEqual(e3.start.hour, 12, "explicit event start")
+        self.assertEqual(e3.end.hour, 12, "implicit event end")
         
     def test_events_recurring(self):
         ical = "test/test_data/recurring.ics"

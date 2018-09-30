@@ -97,8 +97,6 @@ class Event:
         :param uid: UID of new event
         :return: new event
         """
-        duration = self.end - self.start
-
         if not new_start:
             new_start = self.start
 
@@ -109,7 +107,11 @@ class Event:
         ne.summary = self.summary
         ne.description = self.description
         ne.start = new_start
-        ne.end = (new_start + duration)
+        
+        if self.end:
+            duration = self.end - self.start
+            ne.end = (new_start + duration)
+
         ne.all_day = (self.all_day and (new_start - self.start).seconds == 0)
         ne.uid = uid
 
@@ -131,10 +133,10 @@ def create_event(component, tz=UTC):
     
     if component.get('dtend'):
         event.end = normalize(component.get('dtend').dt, tz=tz)
-    elif component.get('duration'):
+    elif component.get('duration'): # compute implicit end as start + duration
         event.end = event.start + component.get('duration').dt
-    else:
-        raise ValueError("Event has neither end, nor duration property.")
+    else: # compute implicit end as start + 0
+        event.end = event.start
     
     event.summary = str(component.get('summary'))
     event.description = str(component.get('description'))
