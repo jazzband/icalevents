@@ -31,6 +31,21 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertEqual(len(evs), 2, "two events are found")
         
+    def test_events_duration(self):
+        ical = "test/test_data/duration.ics"
+        start = date(2018, 1, 1)
+        end = date(2018, 2, 1)
+        
+        evs = icalevents.events(file=ical, start=start, end=end)
+        
+        e1 = evs[0]
+        self.assertEqual(e1.start.day, 10, "explicit event start")
+        self.assertEqual(e1.end.day, 11, "implicit event end")
+
+        e2 = evs[1]
+        self.assertEqual(e2.start.hour, 10, "explicit event start")
+        self.assertEqual(e2.end.hour, 11, "implicit event end")
+        
     def test_events_recurring(self):
         ical = "test/test_data/recurring.ics"
         start = date(2018, 10, 15)
