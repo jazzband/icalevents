@@ -66,6 +66,17 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(e2.start.tzinfo.utcoffset(e2.start), timedelta(seconds=3600), "check UTC offset without DST")
         
         self.assertEqual(e2.start.day, 5, "Check observance of exdate.")
+        
+    def test_events_exdates(self):
+        ical = "test/test_data/recurring.ics"
+        start = date(2018, 6, 1)
+        end = date(2018, 6, 30)
+        
+        evs = icalevents.events(file=ical, start=start, end=end)
+        
+        self.assertEqual(evs[0].start.day, 1, "check first recurrence.")
+        self.assertEqual(evs[1].start.day, 15, "check first exdate.")
+        self.assertEqual(evs[2].start.day, 29, "check second exdate.")
 
     def test_event_attributes(self):
         ical = "test/test_data/basic.ics"
