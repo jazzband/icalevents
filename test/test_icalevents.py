@@ -155,12 +155,12 @@ class ICalEventsTests(unittest.TestCase):
         evs = icalevents.events(file=ical, start=start, end=end)
         
         e1 = evs[0]
-        self.assertIsNotNone(search(r"ended", str(e1.copy_to(n - relativedelta(days=5) + m))))
-        self.assertIsNotNone(search(r"today", str(e1.copy_to(n - relativedelta(days=1) + m))))
-        self.assertIsNotNone(search(r"days left", str(e1.copy_to(n + relativedelta(days=3) + m))))
+        self.assertIsNotNone(search(r"ended", str(e1.copy_to(n - relativedelta(days=5) + m))), "stringify past event")
+        self.assertIsNotNone(search(r"today", str(e1.copy_to(n - relativedelta(days=1) + m))), "stringify ongoing event")
+        self.assertIsNotNone(search(r"days left", str(e1.copy_to(n + relativedelta(days=3) + m))), "stringify future event")
         
         e2 = evs[1]
-        self.assertIsNotNone(search(r"ended", str(e2.copy_to(n - relativedelta(hours=5)))))
-        self.assertIsNotNone(search(r"now", str(e2.copy_to(n - relativedelta(hours=1)))))
-        self.assertIsNotNone(search(r"hours left", str(e2.copy_to(n + relativedelta(hours=3)))))
-        self.assertIsNotNone(search(r"days left", str(e2.copy_to(n + relativedelta(days=3)))))
+        self.assertIsNotNone(search(r"ended", str(e2.copy_to(n - relativedelta(hours=5)))), "stringify past event")
+        self.assertIsNotNone(search(r"now", str(e2.copy_to(n - relativedelta(hours=1)))), "stringify ongoing event")
+        self.assertIsNotNone(search(r"hours left", str(e2.copy_to(n + relativedelta(hours=3)))), "stringify future event")
+        self.assertIsNotNone(search(r"days left", str(e2.copy_to(n + relativedelta(days=3)))), "stringify future event")
