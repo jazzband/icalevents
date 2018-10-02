@@ -39,6 +39,7 @@ class ICalParserTests(unittest.TestCase):
     def test_event_copy_to(self):
         new_start = datetime(year=2017, month=2, day=5, hour=12, minute=5, tzinfo=UTC)
         eventC = self.eventA.copy_to(new_start)
+        new_uid = 1234567890
 
         self.assertNotEqual(eventC.uid, self.eventA.uid, "new event has new UID")
         self.assertEqual(eventC.start, new_start, "new event has new start")
@@ -47,8 +48,8 @@ class ICalParserTests(unittest.TestCase):
         self.assertEqual(eventC.summary, self.eventA.summary, "copy to: summary")
         self.assertEqual(eventC.description, self.eventA.description, "copy to: description")
 
-        eventD = eventC.copy_to()
-        self.assertNotEqual(eventD.uid, eventC.uid, "new event has new UID")
+        eventD = eventC.copy_to(uid=new_uid)
+        self.assertEqual(eventD.uid, new_uid, "new event has specified UID")
         self.assertEqual(eventD.start, eventC.start, "new event has same start")
         self.assertEqual(eventD.end, eventC.end, "new event has same end")
         self.assertEqual(eventD.all_day, eventC.all_day, "new event is no all day event")
@@ -84,3 +85,6 @@ class ICalParserTests(unittest.TestCase):
         self.assertEqual(3, norm.second, "second")
         self.assertEqual(0, norm.microsecond, "microsecond")
         self.assertEqual(UTC, norm.tzinfo, "timezone")
+        
+        with self.assertRaises(ValueError, msg="type check effective"):
+            icalevents.icalparser.normalize(None)

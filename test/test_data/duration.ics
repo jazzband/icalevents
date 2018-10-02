@@ -1,14 +1,14 @@
 BEGIN:VCALENDAR
 BEGIN:VEVENT
 DTSTART:20180110
-DURATION:P1D
-DESCRIPTION:Event with duration (1 day), instead of explicit end.
+DURATION:P3D
+DESCRIPTION:Event with duration (3 days), instead of explicit end.
 SUMMARY:Duration Event
 END:VEVENT
 BEGIN:VEVENT
 DTSTART:20180115T100000
-DURATION:PT1H
-DESCRIPTION:Event with duration (1 hour), instead of explicit end.
+DURATION:PT3H
+DESCRIPTION:Event with duration (3 hours), instead of explicit end.
 SUMMARY:Duration Event
 END:VEVENT
 BEGIN:VEVENT
