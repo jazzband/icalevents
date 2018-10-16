@@ -225,8 +225,12 @@ def parse_rrule(component, tz=UTC):
     :return: extracted rrule or rruleset
     """
     if component.get('rrule'):
-        # Parse the rrule, might return a rruleset instance, instead of rrule
-        rule = rrulestr(component['rrule'].to_ical().decode(), dtstart=normalize(component['dtstart'].dt, tz=tz))
+        # component['rrule'] can be both a scalar and a list
+        rrules = component['rrule']
+        if not isinstance(rrules, list):
+            rrules = [rrules]
+        # Parse the rrules, might return a rruleset instance, instead of rrule
+        rule = rrulestr('\n'.join(x.to_ical().decode() for x in rrules), dtstart=normalize(component['dtstart'].dt, tz=tz))
         
         if component.get('exdate'):
             # Make sure, to work with a rruleset
