@@ -112,7 +112,7 @@ class Event:
             duration = self.end - self.start
             ne.end = (new_start + duration)
 
-        ne.all_day = (self.all_day and (new_start - self.start).seconds == 0)
+        ne.all_day = self.all_day
         ne.uid = uid
 
         return ne

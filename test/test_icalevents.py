@@ -81,6 +81,33 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(evs[1].start.day, 15, "check first exdate.")
         self.assertEqual(evs[2].start.day, 29, "check second exdate.")
 
+    def test_events_all_day_recurring(self):
+        ical = "test/test_data/recurring.ics"
+        start = date(2018, 10, 30)
+        end = date(2018, 10, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        event_set = icalevents.events(url=None, file=ical, start=start, end=end)
+        ev = event_set[0]
+
+        self.assertEqual(len(event_set), 1)
+        self.assertEqual(ev.summary, "Recurring All-day Event")
+        self.assertEqual(ev.description, "All-day event recurring on tuesday each week")
+        self.assertTrue(ev.all_day, "Recurring All-day Event's first instance is an all-day event")
+
+        start_2nd_instance = date(2018, 11, 6)
+        end_2nd_instance = date(2018, 11, 7)
+
+        event_set2 = icalevents.events(url=None, file=ical, start=start_2nd_instance, end=end_2nd_instance)
+        ev_2 = event_set2[0]
+
+        self.assertEqual(len(event_set2), 1)
+        self.assertEqual(ev_2.summary, "Recurring All-day Event")
+        self.assertEqual(ev_2.description, "All-day event recurring on tuesday each week")
+        self.assertTrue(ev_2.all_day, "Recurring All-day Event's second instance is an all-day event")
+
+
     def test_event_attributes(self):
         ical = "test/test_data/basic.ics"
         start = date(2017, 7, 12)
