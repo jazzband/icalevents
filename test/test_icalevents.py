@@ -119,6 +119,25 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(ev.description, "graue Restmülltonne nicht vergessen!")
         self.assertTrue(ev.all_day)
 
+    def test_event_recurring_attribute(self):
+        ical = "test/test_data/basic.ics"
+        start = date(2017, 7, 12)
+        end = date(2017, 7, 13)
+
+        ev = icalevents.events(url=None, file=ical, start=start, end=end)[0]
+        self.assertEqual(ev.recurring, False, "check recurring=False for non recurring event")
+
+        ical = "test/test_data/recurring.ics"
+        start = date(2018, 10, 15)
+        end = date(2018, 11, 15)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        e1 = evs[1]
+        e2 = evs[2]
+        self.assertEqual(e1.recurring, True, "check recurring=True for recurring event (1)")
+        self.assertEqual(e2.recurring, True, "check recurring=True for recurring event (2)")
+
     def test_events_async_url(self):
         url = "https://raw.githubusercontent.com/irgangla/icalevents/master/test/test_data/basic.ics"
         start = date(2017, 5, 18)
