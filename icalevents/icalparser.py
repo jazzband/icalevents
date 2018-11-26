@@ -40,6 +40,7 @@ class Event:
         self.start = None
         self.end = None
         self.all_day = True
+        self.recurring = False
 
     def time_left(self, time=now()):
         """
@@ -113,6 +114,7 @@ class Event:
             ne.end = (new_start + duration)
 
         ne.all_day = self.all_day
+        ne.recurring = self.recurring
         ne.uid = uid
 
         return ne
@@ -141,7 +143,8 @@ def create_event(component, tz=UTC):
     event.summary = str(component.get('summary'))
     event.description = str(component.get('description'))
     event.all_day = type(component.get('dtstart').dt) is date
-
+    if component.get('rrule'):
+        event.recurring = True
     return event
 
 
@@ -204,7 +207,7 @@ def parse_events(content, start=None, end=None):
     for component in calendar.walk():
         if component.name == "VEVENT":
             e = create_event(component)
-            if component.get('rrule'):
+            if e.recurring:
                 # Unfold recurring events according to their rrule
                 rule = parse_rrule(component, cal_tz)
                 dur = e.end - e.start
