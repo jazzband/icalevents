@@ -42,6 +42,7 @@ class Event:
         self.end = None
         self.all_day = True
         self.recurring = False
+        self.location = None
 
     def time_left(self, time=now()):
         """
@@ -144,6 +145,7 @@ def create_event(component, tz=UTC):
     event.summary = str(component.get('summary'))
     event.description = str(unidecode(component.get('description')))
     event.all_day = type(component.get('dtstart').dt) is date
+    event.location = str(component.get('location'))
     if component.get('rrule'):
         event.recurring = True
     return event
