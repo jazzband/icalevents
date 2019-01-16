@@ -11,6 +11,7 @@ from dateutil.tz import UTC, gettz
 from icalendar import Calendar
 from icalendar.prop import vDDDLists
 
+from text_unidecode import unidecode
 
 # default query length (one week)
 default_span = timedelta(days=7)
@@ -141,7 +142,7 @@ def create_event(component, tz=UTC):
         event.end = event.start
     
     event.summary = str(component.get('summary'))
-    event.description = str(component.get('description'))
+    event.description = str(unidecode(component.get('description')))
     event.all_day = type(component.get('dtstart').dt) is date
     if component.get('rrule'):
         event.recurring = True
