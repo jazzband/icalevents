@@ -164,7 +164,7 @@ def normalize(dt, tz=UTC):
         raise ValueError("unknown type %s" % type(dt))
 
     if dt.tzinfo:
-        return dt.astimezone(tz)
+        return dt
     else:
         return dt.replace(tzinfo=tz)
 
