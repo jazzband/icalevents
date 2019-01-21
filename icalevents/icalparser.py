@@ -164,11 +164,9 @@ def normalize(dt, tz=UTC):
         raise ValueError("unknown type %s" % type(dt))
 
     if dt.tzinfo:
-        dt = dt.astimezone(tz)
+        return dt.astimezone(tz)
     else:
-        dt = dt.replace(tzinfo=tz)
-
-    return dt
+        return dt.replace(tzinfo=tz)
 
 
 def parse_events(content, start=None, end=None):
