@@ -140,8 +140,14 @@ def create_event(component, tz=UTC):
     else: # compute implicit end as start + 0
         event.end = event.start
     
-    event.summary = str(component.get('summary'))
-    event.description = str(component.get('description'))
+    try:
+        event.summary = str(component.get('summary'))
+    except UnicodeEncodeError as e:
+        event.summary = str(component.get('summary').encode('utf-8'))
+    try:
+        event.description = str(component.get('description'))
+    except UnicodeEncodeError as e:
+        event.description = str(component.get('description').encode('utf-8'))
     event.all_day = type(component.get('dtstart').dt) is date
     if component.get('rrule'):
         event.recurring = True
