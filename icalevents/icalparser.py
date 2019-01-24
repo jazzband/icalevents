@@ -41,6 +41,7 @@ class Event:
         self.end = None
         self.all_day = True
         self.recurring = False
+        self.location = None
 
     def time_left(self, time=now()):
         """
@@ -115,6 +116,7 @@ class Event:
 
         ne.all_day = self.all_day
         ne.recurring = self.recurring
+        ne.location = self.location
         ne.uid = uid
 
         return ne
@@ -151,6 +153,10 @@ def create_event(component, tz=UTC):
     event.all_day = type(component.get('dtstart').dt) is date
     if component.get('rrule'):
         event.recurring = True
+    try:
+        event.location = str(component.get('location'))
+    except UnicodeEncodeError as e:
+        event.location = str(component.get('location').encode('utf-8'))
     return event
 
 
