@@ -43,12 +43,13 @@ class Event:
         self.recurring = False
         self.location = None
 
-    def time_left(self, time=now()):
+    def time_left(self, time=None):
         """
         timedelta form now to event.
 
         :return: timedelta from now
         """
+        time = time or now()
         return self.start - time
 
     def __lt__(self, other):
