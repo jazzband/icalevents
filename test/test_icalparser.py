@@ -24,7 +24,7 @@ class ICalParserTests(unittest.TestCase):
         self.eventB.all_day = False
         self.eventB.summary = "Event B"
         self.eventB.attendee = ["name@example.com", "another@example.com"]
-        self.eventA.organizer = "name@example.com"
+        self.eventB.organizer = "name@example.com"
 
 
         self.dtA = datetime(2018, 6, 21, 12)
