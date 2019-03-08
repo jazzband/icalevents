@@ -12,10 +12,6 @@ from icalendar import Calendar
 from icalendar.prop import vDDDLists
 
 
-# default query length (one week)
-default_span = timedelta(days=7)
-
-
 def now():
     """
     Get current time.
@@ -43,12 +39,13 @@ class Event:
         self.recurring = False
         self.location = None
 
-    def time_left(self, time=now()):
+    def time_left(self, time=None):
         """
         timedelta form now to event.
 
         :return: timedelta from now
         """
+        time = time or now()
         return self.start - time
 
     def __lt__(self, other):
@@ -157,6 +154,23 @@ def create_event(component, tz=UTC):
         event.location = str(component.get('location'))
     except UnicodeEncodeError as e:
         event.location = str(component.get('location').encode('utf-8'))
+
+    if component.get('attendee'):
+        event.attendee = component.get('attendee')
+        if type(event.attendee) is list:
+            temp = []
+            for a in event.attendee:
+                temp.append(a.encode('utf-8').decode('ascii'))
+            event.attendee = temp
+        else:
+            event.attendee = event.attendee.encode('utf-8').decode('ascii')
+
+    if component.get('uid'):
+        event.uid = component.get('uid').encode('utf-8').decode('ascii')
+
+    if component.get('organizer'):
+        event.organizer = component.get('organizer').encode('utf-8').decode('ascii')
+
     return event
 
 
@@ -183,13 +197,14 @@ def normalize(dt, tz=UTC):
     return dt
 
 
-def parse_events(content, start=None, end=None):
+def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     """
     Query the events occurring in a given time range.
 
     :param content: iCal URL/file content as String
     :param start: start date for search, default today
     :param end: end date for search
+    :param default_span: default query length (one week)
     :return: events as list
     """
     if not start:

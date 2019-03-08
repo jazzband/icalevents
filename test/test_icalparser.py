@@ -13,6 +13,9 @@ class ICalParserTests(unittest.TestCase):
         self.eventA.end = datetime(year=2017, month=2, day=3, hour=15, minute=5, tzinfo=UTC)
         self.eventA.all_day = False
         self.eventA.summary = "Event A"
+        self.eventA.attendee = "name@example.com"
+        self.eventA.organizer = "name@example.com"
+
 
         self.eventB = icalevents.icalparser.Event()
         self.eventB.uid = 1234
@@ -20,7 +23,10 @@ class ICalParserTests(unittest.TestCase):
         self.eventB.end = datetime(year=2017, month=2, day=1, hour=16, minute=5, tzinfo=UTC)
         self.eventB.all_day = False
         self.eventB.summary = "Event B"
-        
+        self.eventB.attendee = ["name@example.com", "another@example.com"]
+        self.eventB.organizer = "name@example.com"
+
+
         self.dtA = datetime(2018, 6, 21, 12)
         self.dtB = datetime(2018, 6, 21, 12, tzinfo=gettz('Europe/Berlin'))
 
@@ -88,3 +94,12 @@ class ICalParserTests(unittest.TestCase):
         
         with self.assertRaises(ValueError, msg="type check effective"):
             icalevents.icalparser.normalize(None)
+
+    def test_attendee(self):
+        self.assertIsInstance(self.eventA.attendee, str)
+        self.assertIsInstance(self.eventB.attendee, list)
+    
+    def test_organizer(self):
+        self.assertIsInstance(self.eventA.organizer, str)
+        self.assertIsInstance(self.eventB.organizer, str)
+        
