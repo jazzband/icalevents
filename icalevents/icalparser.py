@@ -38,6 +38,7 @@ class Event:
         self.all_day = True
         self.recurring = False
         self.location = None
+        self.sequence = None
 
     def time_left(self, time=None):
         """
@@ -100,7 +101,7 @@ class Event:
             new_start = self.start
 
         if not uid:
-            uid = "%s_%d" % (self.uid, randint(0, 1000000))
+            uid = self.uid
 
         ne = Event()
         ne.summary = self.summary
@@ -115,6 +116,7 @@ class Event:
         ne.recurring = self.recurring
         ne.location = self.location
         ne.uid = uid
+        ne.sequence = self.sequence
 
         return ne
 
@@ -167,6 +169,8 @@ def create_event(component, tz=UTC):
 
     if component.get('uid'):
         event.uid = component.get('uid').encode('utf-8').decode('ascii')
+
+    event.sequence = component.get('sequence')
 
     if component.get('organizer'):
         event.organizer = component.get('organizer').encode('utf-8').decode('ascii')
@@ -229,7 +233,12 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     start = normalize(start, cal_tz)
     end = normalize(end, cal_tz)
 
-    found = []
+    found = {}
+    def add_event(found, event):
+        key = (event.uid, event.start.date())
+        original_event = found.get(key)
+        if original_event is None or event.sequence > original_event.sequence:
+            found.update({key: event})
 
     for component in calendar.walk():
         if component.name == "VEVENT":
@@ -238,10 +247,12 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 # Unfold recurring events according to their rrule
                 rule = parse_rrule(component, cal_tz)
                 dur = e.end - e.start
-                found.extend(e.copy_to(dt) for dt in rule.between(start - dur, end, inc=True))
+                for dt in rule.between(start - dur, end, inc=True):
+                    ne = e.copy_to(dt)
+                    add_event(found, ne)
             elif e.end >= start and e.start <= end:
-                found.append(e)
-    return found
+                add_event(found, e)
+    return list(found.values())
 
 
 def parse_rrule(component, tz=UTC):
