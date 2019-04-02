@@ -259,6 +259,15 @@ def parse_rrule(component, tz=UTC):
         rrules = component['rrule']
         if not isinstance(rrules, list):
             rrules = [rrules]
+
+        # Since DTSTART are always made timezone aware, UNTIL with no tzinfo
+        # must be converted to UTC.
+        for rule in rrules:
+            until = rule.get("until")
+            for idx, dt in enumerate(until or []):
+                if not hasattr(dt, 'tzinfo'):
+                    until[idx] = normalize(normalize(dt, tz=tz), tz=UTC)
+
         # Parse the rrules, might return a rruleset instance, instead of rrule
         rule = rrulestr('\n'.join(x.to_ical().decode() for x in rrules), dtstart=normalize(component['dtstart'].dt, tz=tz))
         

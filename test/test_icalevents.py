@@ -107,6 +107,18 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(ev_2.description, "All-day event recurring on tuesday each week")
         self.assertTrue(ev_2.all_day, "Recurring All-day Event's second instance is an all-day event")
 
+    def test_events_rrule_until(self):
+        ical = "test/test_data/rrule_until.ics"
+        start = date(2019, 4, 2)
+        end = date(2019, 4, 3)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(len(evs), 2)
+        self.assertEqual(evs[0].recurring, True)
+        self.assertEqual(evs[0].summary, "Recurring All-day Event")
+        self.assertEqual(evs[1].recurring, True)
+        self.assertEqual(evs[1].summary, "Daily lunch event")
 
     def test_event_attributes(self):
         ical = "test/test_data/basic.ics"
