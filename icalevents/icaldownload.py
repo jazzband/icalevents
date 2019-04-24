@@ -5,7 +5,11 @@ from httplib2 import Http
 
 
 # default http connection to use
-default_http = Http('.cache')
+try:
+    default_http = Http('.cache')
+except PermissionError:
+    # Cache disabled if no write permission in working directory
+    default_http = Http()
 
 
 def apple_data_fix(content):
