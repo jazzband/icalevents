@@ -38,6 +38,7 @@ class Event:
         self.all_day = True
         self.recurring = False
         self.location = None
+        self.private = False
 
     def time_left(self, time=None):
         """
@@ -114,6 +115,7 @@ class Event:
         ne.all_day = self.all_day
         ne.recurring = self.recurring
         ne.location = self.location
+        ne.private = self.private
         ne.uid = uid
 
         return ne
@@ -170,6 +172,10 @@ def create_event(component, tz=UTC):
 
     if component.get('organizer'):
         event.organizer = component.get('organizer').encode('utf-8').decode('ascii')
+
+    if component.get('class'):
+        event_class = component.get('class')
+        event.private = event_class == 'PRIVATE' or event_class == 'CONFIDENTIAL'
 
     return event
 
