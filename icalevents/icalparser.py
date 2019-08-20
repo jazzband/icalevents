@@ -4,12 +4,14 @@ Parse iCal data to Events.
 # for UID generation
 from random import randint
 from datetime import datetime, timedelta, date
+from typing import Optional
+
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, rruleset, rrulestr
 from dateutil.tz import UTC, gettz
 
 from icalendar import Calendar
-from icalendar.prop import vDDDLists
+from icalendar.prop import vDDDLists, vText
 
 
 def now():
@@ -125,6 +127,15 @@ class Event:
         return ne
 
 
+def encode(value: Optional[vText]) -> Optional[str]:
+    if value is None:
+        return None
+    try:
+        return str(value)
+    except UnicodeEncodeError:
+        return str(value.encode('utf-8'))
+
+
 def create_event(component, tz=UTC):
     """
     Create an event from its iCal representation.
@@ -145,21 +156,12 @@ def create_event(component, tz=UTC):
     else: # compute implicit end as start + 0
         event.end = event.start
     
-    try:
-        event.summary = str(component.get('summary'))
-    except UnicodeEncodeError as e:
-        event.summary = str(component.get('summary').encode('utf-8'))
-    try:
-        event.description = str(component.get('description'))
-    except UnicodeEncodeError as e:
-        event.description = str(component.get('description').encode('utf-8'))
+    event.summary = encode(component.get('summary'))
+    event.description = encode(component.get('description'))
     event.all_day = type(component.get('dtstart').dt) is date
     if component.get('rrule'):
         event.recurring = True
-    try:
-        event.location = str(component.get('location'))
-    except UnicodeEncodeError as e:
-        event.location = str(component.get('location').encode('utf-8'))
+    event.location = encode(component.get('location'))
 
     if component.get('attendee'):
         event.attendee = component.get('attendee')

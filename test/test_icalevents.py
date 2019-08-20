@@ -223,6 +223,17 @@ class ICalEventsTests(unittest.TestCase):
         self.assertIsNotNone(search(r"hours left", str(e2.copy_to(n + relativedelta(hours=3)))), "stringify future event")
         self.assertIsNotNone(search(r"days left", str(e2.copy_to(n + relativedelta(days=3)))), "stringify future event")
 
+    def test_events_no_description(self):
+        ical = "test/test_data/no_description.ics"
+        start = date(2018, 10, 15)
+        end = date(2018, 11, 15)
+
+        e1 = icalevents.events(file=ical, start=start, end=end)[0]
+
+        self.assertEqual(e1.description, None)
+        self.assertEqual(e1.summary, None)
+        self.assertEqual(e1.location, None)
+
     def test_event_created_last_modified(self):
         ical = "test/test_data/created_last_modified.ics"
         start = date(2017, 7, 12)
