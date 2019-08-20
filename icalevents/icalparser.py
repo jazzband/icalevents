@@ -41,6 +41,8 @@ class Event:
         self.recurring = False
         self.location = None
         self.private = False
+        self.created = None
+        self.last_modified = None
 
     def time_left(self, time=None):
         """
@@ -119,6 +121,8 @@ class Event:
         ne.location = self.location
         ne.private = self.private
         ne.uid = uid
+        ne.created = self.created
+        ne.last_modified = self.last_modified
 
         return ne
 
@@ -179,6 +183,14 @@ def create_event(component, tz=UTC):
         event_class = component.get('class')
         event.private = event_class == 'PRIVATE' or event_class == 'CONFIDENTIAL'
 
+    if component.get('created'):
+        event.created = normalize(component.get('created').dt, tz)
+
+    if component.get('last-modified'):
+        event.last_modified = normalize(component.get('last-modified').dt, tz)
+    elif event.created:
+        event.last_modified = event.created
+
     return event
 
 
@@ -230,7 +242,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     for c in calendar.walk():
         if c.name == 'VTIMEZONE':
             cal_tz = gettz(str(c['TZID']))
-            break;
+            break
     else:
         cal_tz = UTC
 
@@ -241,7 +253,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
 
     for component in calendar.walk():
         if component.name == "VEVENT":
-            e = create_event(component)
+            e = create_event(component, cal_tz)
             if e.recurring:
                 # Unfold recurring events according to their rrule
                 rule = parse_rrule(component, cal_tz)
