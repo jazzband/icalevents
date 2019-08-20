@@ -26,4 +26,5 @@ nTP/AAujx2VguoVrkHcB3m92OxkHRdOOjjMZz2FoqjCQNRI8V//U98KKniirfnYdaUc8zk/ohv/JjUPA
 yLMng+mE8bKvhAgotuPt2MSKV6NNbmJXmHrZig+YO8N70B8C+frwM/Wozvk7Pz3nydeUBL8v0wBzynsvco6kVs0g6NhszgRi7d16cOZ8G3vN6bZVa4xxkWIzSPbKy3hMg8Z94pxTrVl/o5QY67hIf7mCvlOJ5o6xo8q0UDlSdg="
   on:
     branch: master
+    tags: true
   distributions: "sdist"
