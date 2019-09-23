@@ -4,14 +4,6 @@ Downloads an iCal url or reads an iCal file.
 from httplib2 import Http
 
 
-# default http connection to use
-try:
-    default_http = Http('.cache')
-except PermissionError:
-    # Cache disabled if no write permission in working directory
-    default_http = Http()
-
-
 def apple_data_fix(content):
     """
     Fix Apple tzdata bug.
@@ -38,7 +30,15 @@ class ICalDownload:
     """
     Downloads or reads and decodes iCal sources.
     """
-    def __init__(self, http=default_http, encoding='utf-8'):
+    def __init__(self, http=None, encoding='utf-8'):
+        # default http connection to use
+        if http is None:
+            try:
+                http = Http('.cache')
+            except PermissionError:
+                # Cache disabled if no write permission in working directory
+                http = Http()
+
         self.http = http
         self.encoding = encoding
 

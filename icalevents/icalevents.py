@@ -12,7 +12,15 @@ event_store = {}
 threads = {}
 
 
-def events(url=None, file=None, string_content=None, start=None, end=None, fix_apple=False):
+def events(
+    url=None,
+    file=None,
+    string_content=None,
+    start=None,
+    end=None,
+    fix_apple=False,
+    http=None,
+):
     """
     Get all events form the given iCal URL occurring in the given time range.
 
@@ -27,16 +35,17 @@ def events(url=None, file=None, string_content=None, start=None, end=None, fix_a
     found_events = []
 
     content = None
+    ical_download = ICalDownload(http=http)
 
     if url:
-        content = ICalDownload().data_from_url(url, apple_fix=fix_apple)
+        content = ical_download.data_from_url(url, apple_fix=fix_apple)
 
     if not content and file:
-        content = ICalDownload().data_from_file(file, apple_fix=fix_apple)
+        content = ical_download.data_from_file(file, apple_fix=fix_apple)
 
     if not content and string_content:
-        content = ICalDownload().data_from_string(string_content,
-                                                  apple_fix=fix_apple)
+        content = ical_download.data_from_string(
+            string_content, apple_fix=fix_apple)
 
     found_events += parse_events(content, start=start, end=end)
 
