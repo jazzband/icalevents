@@ -43,6 +43,7 @@ class Event:
         self.private = False
         self.created = None
         self.last_modified = None
+        self.sequence = None
 
     def time_left(self, time=None):
         """
@@ -190,6 +191,9 @@ def create_event(component, tz=UTC):
         event.last_modified = normalize(component.get('last-modified').dt, tz)
     elif event.created:
         event.last_modified = event.created
+
+    if component.get('sequence'):
+        event.sequence = component.get('sequence')
 
     return event
 
