@@ -12,6 +12,7 @@ from dateutil.tz import UTC, gettz
 
 from icalendar import Calendar
 from icalendar.prop import vDDDLists, vText
+from pytz import timezone
 
 
 def now():
@@ -44,6 +45,8 @@ class Event:
         self.created = None
         self.last_modified = None
         self.sequence = None
+        self.attendee = None
+        self.organizer = None
 
     def time_left(self, time=None):
         """
@@ -112,7 +115,7 @@ class Event:
         ne.summary = self.summary
         ne.description = self.description
         ne.start = new_start
-        
+
         if self.end:
             duration = self.end - self.start
             ne.end = (new_start + duration)
@@ -120,6 +123,8 @@ class Event:
         ne.all_day = self.all_day
         ne.recurring = self.recurring
         ne.location = self.location
+        ne.attendee = self.attendee
+        ne.organizer = self.organizer
         ne.private = self.private
         ne.uid = uid
         ne.created = self.created
@@ -149,14 +154,14 @@ def create_event(component, tz=UTC):
     event = Event()
 
     event.start = normalize(component.get('dtstart').dt, tz=tz)
-    
+
     if component.get('dtend'):
         event.end = normalize(component.get('dtend').dt, tz=tz)
     elif component.get('duration'): # compute implicit end as start + duration
         event.end = event.start + component.get('duration').dt
     else: # compute implicit end as start + 0
         event.end = event.start
-    
+
     event.summary = encode(component.get('summary'))
     event.description = encode(component.get('description'))
     event.all_day = type(component.get('dtstart').dt) is date
@@ -173,12 +178,16 @@ def create_event(component, tz=UTC):
             event.attendee = temp
         else:
             event.attendee = event.attendee.encode('utf-8').decode('ascii')
+    else:
+        event.attendee = str(None)
 
     if component.get('uid'):
         event.uid = component.get('uid').encode('utf-8').decode('ascii')
 
     if component.get('organizer'):
         event.organizer = component.get('organizer').encode('utf-8').decode('ascii')
+    else:
+        event.organizer = str(None)
 
     if component.get('class'):
         event_class = component.get('class')
@@ -241,12 +250,24 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
         raise ValueError('Content is invalid!')
 
     calendar = Calendar.from_ical(content)
-    
-    # Find the calendar's timezone info, or use UTC
-    for c in calendar.walk():
-        if c.name == 'VTIMEZONE':
-            cal_tz = gettz(str(c['TZID']))
-            break
+
+    # Keep track of the timezones defined in the calendar
+    timezones = {}
+    for c in calendar.walk('VTIMEZONE'):
+        name = str(c['TZID'])
+        try:
+            timezones[name] = c.to_tz()
+        except IndexError:
+            # This happens if the VTIMEZONE doesn't
+            # contain start/end times for daylight
+            # saving time. Get the system pytz
+            # value from the name as a fallback.
+            timezones[name] = timezone(name)
+
+    # If there's exactly one timezone in the file,
+    # assume it applies globally, otherwise UTC
+    if len(timezones) == 1:
+        cal_tz = gettz(list(timezones)[0])
     else:
         cal_tz = UTC
 
@@ -255,16 +276,110 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
 
     found = []
 
+    # Skip dates that are stored as exceptions.
+    exceptions = {}
     for component in calendar.walk():
         if component.name == "VEVENT":
             e = create_event(component, cal_tz)
+
+            if ('EXDATE' in component):
+                # Deal with the fact that sometimes it's a list and
+                # sometimes it's a singleton
+                exlist = []
+                if isinstance(component['EXDATE'], list):
+                    exlist = component['EXDATE']
+                else:
+                    exlist.append(component['EXDATE'])
+                for ex in exlist:
+                    exdate = ex.to_ical().decode("UTF-8")
+                    exceptions[exdate[0:8]] = exdate
+
+            # Attempt to work out what timezone is used for the start
+            # and end times. If the timezone is defined in the calendar,
+            # use it; otherwise, attempt to load the rules from pytz.
+            start_tz = None
+            end_tz = None
+
+            if e.all_day:
+                # Start and end times for all day events must not have
+                # a timezone because the specification forbids the
+                # RRULE UNTIL from having a timezone. On the other
+                # hand, they must be datetime values (not just dates)
+                # because RRULE UNTIL will do a comparison against a
+                # timezone naive datetime. So we coerce start and end
+                # times for all day events into timezone naive
+                # datetime values.
+                e.start = datetime.combine(e.start.date(), datetime.min.time())
+                e.end = datetime.combine(e.end.date(), datetime.min.time())
+                start = datetime.combine(start, datetime.min.time())
+                end = datetime.combine(end, datetime.min.time())
+            else:
+                # Work out the staring and ending timezone. We don't do
+                # this for all-day appointments because they aren't really
+                # in a timezone.
+                if e.start.tzinfo != UTC:
+                    if str(e.start.tzinfo) in timezones:
+                        start_tz = timezones[str(e.start.tzinfo)]
+                    else:
+                        try:
+                            start_tz = timezone(str(e.start.tzinfo))
+                        except:
+                            pass
+
+                if e.end.tzinfo != UTC:
+                    if str(e.end.tzinfo) in timezones:
+                        end_tz = timezones[str(e.end.tzinfo)]
+                    else:
+                        try:
+                            end_tz = timezone(str(e.end.tzinfo))
+                        except:
+                            pass
+
+            # If we've been passed or constructed start/end values
+            # that are timezone naive, but the actual appointment
+            # start and end times are in a timezone, convert start
+            # and end to have a timezone. Otherwise, python will
+            # raise an exception for comparing timezone naive
+            # and offset-aware values.
+            if e.start.tzinfo and not start.tzinfo:
+                start = normalize(start, e.start.tzinfo)
+            if e.start.tzinfo and not end.tzinfo:
+                end = normalize(end, e.start.tzinfo)
+
+            duration = e.end - e.start
             if e.recurring:
                 # Unfold recurring events according to their rrule
                 rule = parse_rrule(component, cal_tz)
                 dur = e.end - e.start
-                found.extend(e.copy_to(dt) for dt in rule.between(start - dur, end, inc=True))
+                after = start - dur
+
+                for dt in rule.between(after, end, inc=True):
+                    if start_tz is None:
+                        # Shrug. If we coudln't work out the timezone, it is what it is.
+                        ecopy = e.copy_to(dt, e.uid)
+                    else:
+                        # Recompute the start time in the current timezone *on* the
+                        # date of *this* occurrence. This handles the case where the
+                        # recurrence has crossed over the daylight savings time boundary.
+                        naive = datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+                        dtstart = start_tz.localize(naive)
+
+                        ecopy = e.copy_to(dtstart, e.uid)
+
+                        # We're effectively looping over the start time, we might need
+                        # to adjust the end time too, but don't have it's recurred value.
+                        # Make sure it's adjusted by constructing it from the meeting
+                        # duration. Pro: it'll be right. Con: if it was in a different
+                        # timezone from the start time, we'll have lost that.
+                        ecopy.end = dtstart + duration
+
+                    exdate = "%04d%02d%02d" % (ecopy.start.year, ecopy.start.month, ecopy.start.day)
+                    if exdate not in exceptions:
+                        found.append(ecopy)
             elif e.end >= start and e.start <= end:
-                found.append(e)
+                exdate = "%04d%02d%02d" % (e.start.year, e.start.month, e.start.day)
+                if exdate not in exceptions:
+                    found.append(e)
     return found
 
 
@@ -273,7 +388,7 @@ def parse_rrule(component, tz=UTC):
     Extract a dateutil.rrule object from an icalendar component. Also includes
     the component's dtstart and exdate properties. The rdate and exrule
     properties are not yet supported.
-    
+
     :param component: icalendar component
     :param tz: timezone for DST handling
     :return: extracted rrule or rruleset
@@ -284,42 +399,40 @@ def parse_rrule(component, tz=UTC):
         if not isinstance(rrules, list):
             rrules = [rrules]
 
-        # Since DTSTART are always made timezone aware, UNTIL with no tzinfo
-        # must be converted to UTC.
-        for rule in rrules:
-            until = rule.get("until")
-            for idx, dt in enumerate(until or []):
-                if not hasattr(dt, 'tzinfo'):
-                    until[idx] = normalize(normalize(dt, tz=tz), tz=UTC)
+        # If dtstart is a datetime, make sure it's in a timezone.
+        rdtstart = component['dtstart'].dt
+        if type(rdtstart) is datetime:
+            rdtstart = normalize(rdtstart, tz=tz)
 
         # Parse the rrules, might return a rruleset instance, instead of rrule
-        rule = rrulestr('\n'.join(x.to_ical().decode() for x in rrules), dtstart=normalize(component['dtstart'].dt, tz=tz))
-        
+        rule = rrulestr('\n'.join(x.to_ical().decode() for x in rrules),
+                        dtstart=rdtstart)
+
         if component.get('exdate'):
             # Make sure, to work with a rruleset
             if isinstance(rule, rrule):
                 rules = rruleset()
                 rules.rrule(rule)
                 rule = rules
-            
+
             # Add exdates to the rruleset
             for exd in extract_exdates(component):
                 rule.exdate(exd)
-        
-        #TODO: What about rdates and exrules?
-        
+
+        # TODO: What about rdates and exrules?
+
     # You really want an rrule for a component without rrule? Here you are.
     else:
         rule = rruleset()
         rule.rdate(normalize(component['dtstart'].dt, tz=tz))
-    
+
     return rule
 
 
 def extract_exdates(component):
     """
     Compile a list of all exception dates stored with a component.
-    
+
     :param component: icalendar iCal component
     :return: list of exception dates
     """
@@ -334,4 +447,3 @@ def extract_exdates(component):
             dates.extend(normalize(exd.dt) for exd in exd_prop.dts)
 
     return dates
-
