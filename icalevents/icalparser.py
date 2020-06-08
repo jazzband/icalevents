@@ -50,6 +50,7 @@ class Event:
         self.attendee = None
         self.organizer = None
         self.categories = None
+        self.status = None
 
     def time_left(self, time=None):
         """
@@ -226,6 +227,9 @@ def create_event(component, tz=UTC):
         for category in categories:
             encoded_categories.append(encode(category))
         event.categories = encoded_categories
+
+    if component.get("status"):
+        event.status = component.get("status")
 
     return event
 
