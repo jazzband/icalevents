@@ -47,6 +47,7 @@ class Event:
         self.sequence = None
         self.attendee = None
         self.organizer = None
+        self.status = None
 
     def time_left(self, time=None):
         """
@@ -203,6 +204,9 @@ def create_event(component, tz=UTC):
 
     if component.get('sequence'):
         event.sequence = component.get('sequence')
+
+    if component.get('status'):
+        event.status = component.get('status')
 
     return event
 
