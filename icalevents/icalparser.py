@@ -48,6 +48,7 @@ class Event:
         self.attendee = None
         self.organizer = None
         self.status = None
+        self.url = None
 
     def time_left(self, time=None):
         """
@@ -130,6 +131,7 @@ class Event:
         ne.uid = uid
         ne.created = self.created
         ne.last_modified = self.last_modified
+        ne.url = self.url
 
         return ne
 
@@ -207,6 +209,9 @@ def create_event(component, tz=UTC):
 
     if component.get('status'):
         event.status = component.get('status')
+
+    if component.get('url'):
+        event.url = component.get('url')
 
     return event
 
