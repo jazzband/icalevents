@@ -35,7 +35,7 @@ class ICalDownload:
         if http is None:
             try:
                 http = Http('.cache')
-            except PermissionError:
+            except (PermissionError, OSError):
                 # Cache disabled if no write permission in working directory
                 http = Http()
 
