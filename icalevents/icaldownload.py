@@ -35,8 +35,9 @@ class ICalDownload:
         if http is None:
             try:
                 http = Http('.cache')
-            except (PermissionError, OSError):
+            except (PermissionError, OSError) as e:
                 # Cache disabled if no write permission in working directory
+                print(("Caching is disabled due to a read-only working directory: {}").format(e))
                 http = Http()
 
         self.http = http
