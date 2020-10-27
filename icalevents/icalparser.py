@@ -271,14 +271,16 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     else:
         cal_tz = UTC
 
-    start = normalize(start, cal_tz)
-    end = normalize(end, cal_tz)
+    _start = normalize(start, cal_tz)
+    _end = normalize(end, cal_tz)
 
     found = []
 
     # Skip dates that are stored as exceptions.
     exceptions = {}
     for component in calendar.walk():
+        start = _start
+        end = _end
         if component.name == "VEVENT":
             e = create_event(component, cal_tz)
 
