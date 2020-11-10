@@ -249,3 +249,11 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertEqual(events[2].created, None)
         self.assertEqual(events[2].last_modified, None)
+
+    def test_event_categories(self):
+        ical = "test/test_data/categories_test.ics"
+        start = date(2020, 11, 10)
+        end = date(2020, 11, 19)
+        events = icalevents.events(url=None, file=ical, start=start, end=end)
+        self.assertEqual(events[0].categories, ["In19-S04-IT2403"], "event 1 is not equal")
+        self.assertEqual(events[1].categories, ["In19-S04-IT2406", "In19-S04-IT2405"], "event 2 is not equal")
