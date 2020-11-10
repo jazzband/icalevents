@@ -47,6 +47,7 @@ class Event:
         self.sequence = None
         self.attendee = None
         self.organizer = None
+        self.categories = None
 
     def time_left(self, time=None):
         """
@@ -129,6 +130,7 @@ class Event:
         ne.uid = uid
         ne.created = self.created
         ne.last_modified = self.last_modified
+        ne.categories = self.categories
 
         return ne
 
@@ -203,6 +205,13 @@ def create_event(component, tz=UTC):
 
     if component.get('sequence'):
         event.sequence = component.get('sequence')
+
+    if component.get("categories"):
+        categories = component.get("categories").cats
+        encoded_categories = list()
+        for category in categories:
+            encoded_categories.append(encode(category))
+        event.categories = encoded_categories
 
     return event
 
