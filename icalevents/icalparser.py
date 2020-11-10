@@ -291,7 +291,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
         if component.name == "VEVENT":
             e = create_event(component, cal_tz)
 
-            if ('EXDATE' in component):
+            if 'EXDATE' in component:
                 # Deal with the fact that sometimes it's a list and
                 # sometimes it's a singleton
                 exlist = []
@@ -364,7 +364,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
 
                 for dt in rule.between(after, end, inc=True):
                     if start_tz is None:
-                        # Shrug. If we coudln't work out the timezone, it is what it is.
+                        # Shrug. If we couldn't work out the timezone, it is what it is.
                         ecopy = e.copy_to(dt, e.uid)
                     else:
                         # Recompute the start time in the current timezone *on* the
