@@ -10,7 +10,6 @@ setup(
         "httplib2",
         "icalendar",
         "pytz",
-        "datetime",
     ],
     version=version,
     description = 'iCal downloader and parser',
