@@ -71,15 +71,20 @@ DTSTART:19180331T020000
 
     def test_read_only_directory(self):
         # Save current directory permissions
-        oldPerms = oct(os.stat(os.getcwd()).st_mode)
+        oldPerms = os.stat(os.getcwd()).st_mode
         # Set working directory as read-only
         os.chmod(os.getcwd(), 0o500)
 
         # Assert log message is being thrown
         logger = logging.getLogger()
-        with self.assertLogs(level="WARNING") as cm:
-            # Create new ICalDownload instance which will try to create the .cache directory
-            ical_download = icalevents.icaldownload.ICalDownload(http=None)
+        try:
+            with self.assertLogs(level="WARNING") as cm:
+                # Create new ICalDownload instance which will try to create the .cache directory
+                ical_download = icalevents.icaldownload.ICalDownload(http=None)
+        except:
+            # If the test failed, we have to recover the old directory permissions and let the test fail ultimately
+            os.chmod(os.getcwd(), oldPerms)
+            self.assertTrue(False, "Test run failed. Changed directory permissions back to old permissions.")
 
         # Change directory back to old permissions
         os.chmod(os.getcwd(), oldPerms)
