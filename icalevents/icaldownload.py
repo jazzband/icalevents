@@ -32,13 +32,16 @@ class ICalDownload:
     Downloads or reads and decodes iCal sources.
     """
     def __init__(self, http=None, encoding='utf-8'):
+        # Get logger
+        logger = logging.getLogger()
+
         # default http connection to use
         if http is None:
             try:
                 http = Http('.cache')
             except (PermissionError, OSError) as e:
                 # Cache disabled if no write permission in working directory
-                logging.warning(("Caching is disabled due to a read-only working directory: {}").format(e))
+                logger.warning(("Caching is disabled due to a read-only working directory: {}").format(e))
                 http = Http()
 
         self.http = http
