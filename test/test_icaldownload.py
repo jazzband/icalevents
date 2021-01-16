@@ -70,6 +70,10 @@ DTSTART:19180331T020000
         self.assertEqual(expected, content, "content form iCal file, google format")
 
     def test_read_only_directory(self):
+        # Switch to new directory so we can perform os.chmod()
+        os.mkdir("tmp")
+        os.chdir("tmp")
+
         # Save current directory permissions
         oldPerms = os.stat(os.getcwd()).st_mode
         # Set working directory as read-only
@@ -81,10 +85,14 @@ DTSTART:19180331T020000
             with self.assertLogs(level="WARNING") as cm:
                 # Create new ICalDownload instance which will try to create the .cache directory
                 ical_download = icalevents.icaldownload.ICalDownload(http=None)
-        except:
-            # If the test failed, we have to recover the old directory permissions and let the test fail ultimately
+        finally:
+            # Change directory back to old permissions
+            print(oldPerms)
             os.chmod(os.getcwd(), oldPerms)
-            self.assertTrue(False, "Test run failed. Changed directory permissions back to old permissions.")
 
-        # Change directory back to old permissions
-        os.chmod(os.getcwd(), oldPerms)
+            print(os.stat(os.getcwd()))
+
+            # Delete tmp dir
+            os.chdir("..")
+            os.remove("tmp")
+
