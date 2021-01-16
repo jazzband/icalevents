@@ -81,17 +81,13 @@ DTSTART:19180331T020000
         os.chmod(os.getcwd(), 0o500)
 
         # Assert log message is being thrown
-        logger = logging.getLogger()
         try:
             with self.assertLogs(level="WARNING") as cm:
                 # Create new ICalDownload instance which will try to create the .cache directory
                 ical_download = icalevents.icaldownload.ICalDownload(http=None)
         finally:
             # Change directory back to old permissions
-            print(oldPerms)
             os.chmod(os.getcwd(), oldPerms)
-
-            print(os.stat(os.getcwd()))
 
             # Delete tmp dir
             os.chdir("..")
