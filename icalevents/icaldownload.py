@@ -2,6 +2,7 @@
 Downloads an iCal url or reads an iCal file.
 """
 from httplib2 import Http
+import logging
 
 
 def apple_data_fix(content):
@@ -37,7 +38,7 @@ class ICalDownload:
                 http = Http('.cache')
             except (PermissionError, OSError) as e:
                 # Cache disabled if no write permission in working directory
-                print(("Caching is disabled due to a read-only working directory: {}").format(e))
+                logging.warning(("Caching is disabled due to a read-only working directory: {}").format(e))
                 http = Http()
 
         self.http = http
