@@ -1,6 +1,7 @@
 import unittest
 import icalevents.icaldownload
 import os
+import shutil
 import logging
 
 
@@ -94,5 +95,5 @@ DTSTART:19180331T020000
 
             # Delete tmp dir
             os.chdir("..")
-            os.remove("tmp")
+            shutil.rmtree("tmp")
 
