@@ -1,5 +1,8 @@
 import unittest
 import icalevents.icaldownload
+import os
+import shutil
+import logging
 
 
 class ICalDownloadTests(unittest.TestCase):
@@ -66,3 +69,27 @@ DTSTART:19180331T020000
         content = icalevents.icaldownload.ICalDownload().data_from_file(file, apple_fix=True)
 
         self.assertEqual(expected, content, "content form iCal file, google format")
+
+    def test_read_only_directory(self):
+        # Switch to new directory so we can perform os.chmod()
+        os.mkdir("tmp")
+        os.chdir("tmp")
+
+        # Save current directory permissions
+        oldPerms = os.stat(os.getcwd()).st_mode
+        # Set working directory as read-only
+        os.chmod(os.getcwd(), 0o500)
+
+        # Assert log message is being thrown
+        try:
+            with self.assertLogs(level="WARNING") as cm:
+                # Create new ICalDownload instance which will try to create the .cache directory
+                ical_download = icalevents.icaldownload.ICalDownload(http=None)
+        finally:
+            # Change directory back to old permissions
+            os.chmod(os.getcwd(), oldPerms)
+
+            # Delete tmp dir
+            os.chdir("..")
+            shutil.rmtree("tmp")
+
