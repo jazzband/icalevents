@@ -47,6 +47,7 @@ class Event:
         self.sequence = None
         self.attendee = None
         self.organizer = None
+        self.categories = None
 
     def time_left(self, time=None):
         """
@@ -129,6 +130,7 @@ class Event:
         ne.uid = uid
         ne.created = self.created
         ne.last_modified = self.last_modified
+        ne.categories = self.categories
 
         return ne
 
@@ -203,6 +205,13 @@ def create_event(component, tz=UTC):
 
     if component.get('sequence'):
         event.sequence = component.get('sequence')
+
+    if component.get("categories"):
+        categories = component.get("categories").cats
+        encoded_categories = list()
+        for category in categories:
+            encoded_categories.append(encode(category))
+        event.categories = encoded_categories
 
     return event
 
@@ -282,7 +291,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
         if component.name == "VEVENT":
             e = create_event(component, cal_tz)
 
-            if ('EXDATE' in component):
+            if 'EXDATE' in component:
                 # Deal with the fact that sometimes it's a list and
                 # sometimes it's a singleton
                 exlist = []
@@ -355,7 +364,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
 
                 for dt in rule.between(after, end, inc=True):
                     if start_tz is None:
-                        # Shrug. If we coudln't work out the timezone, it is what it is.
+                        # Shrug. If we couldn't work out the timezone, it is what it is.
                         ecopy = e.copy_to(dt, e.uid)
                     else:
                         # Recompute the start time in the current timezone *on* the
