@@ -1,7 +1,6 @@
 from icalevents.icalevents import events_async, latest_events, all_done
 from time import sleep
 
-
 if __name__ == '__main__':
     keys = []
 
@@ -21,13 +20,10 @@ if __name__ == '__main__':
             if name == 'icloud':
                 fix_apple = True
 
-
             key = "req_%d" % counter
             counter += 1
             keys.append(key)
             events_async(key, url, fix_apple=fix_apple)
-
-
 
     while keys:
         print("%d request running." % len(keys))
