@@ -73,6 +73,11 @@ class Event:
     def __str__(self):
         n = now()
 
+        if not self.start.tzinfo:
+            self.start = normalize(self.start)
+        if not self.end.tzinfo:
+            self.end = normalize(self.end)
+
         # compute time delta description
         if not self.all_day:
             if self.end > n > self.start:
