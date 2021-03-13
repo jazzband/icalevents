@@ -149,16 +149,27 @@ def encode(value: Optional[vText]) -> Optional[str]:
         return str(value.encode('utf-8'))
 
 
-def create_event(component, tz=UTC):
+def create_event(component, timezones, tz=UTC):
     """
     Create an event from its iCal representation.
 
     :param component: iCal component
-    :param tz: timezone for start and end times
+    :param timezones: dict of timezones defined by the calendar
+    :param tz: default calendar-wide timezone for start and end times
     :return: event
     """
 
     event = Event()
+
+    # check if the event specifies a timezone ID, e.g. when its 
+    # DTSTART attribute is defined like this:
+    #     DTSTART;TZID=GMT Standard Time:20210313T090000
+    dtstart_params = component.get('dtstart').params
+    if 'TZID' in dtstart_params:
+        # if the indicated TZID string matches any of those defined
+        # by the calendar then use it as the event timezone. 
+        # otherwise fall back on the default calendar-wide timezone.
+        tz = timezones.get(dtstart_params['TZID'], tz)
 
     event.start = normalize(component.get('dtstart').dt, tz=tz)
 
@@ -294,7 +305,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     exceptions = {}
     for component in calendar.walk():
         if component.name == "VEVENT":
-            e = create_event(component, cal_tz)
+            e = create_event(component, timezones, cal_tz)
 
             if 'EXDATE' in component:
                 # Deal with the fact that sometimes it's a list and
