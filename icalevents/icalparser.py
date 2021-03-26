@@ -13,6 +13,8 @@ from dateutil.tz import UTC, gettz
 from icalendar import Calendar
 from icalendar.prop import vDDDLists, vText
 
+from .zones import zones
+
 
 def now():
     """
@@ -246,6 +248,8 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     for c in calendar.walk():
         if c.name == 'VTIMEZONE':
             cal_tz = gettz(str(c['TZID']))
+            if not cal_tz:
+                cal_tz = gettz(zones[str(c['TZID'])])
             break
     else:
         cal_tz = UTC
