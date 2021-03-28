@@ -14,6 +14,8 @@ from icalendar import Calendar
 from icalendar.prop import vDDDLists, vText
 from pytz import timezone
 
+from icalendar.windows_to_olson import WINDOWS_TO_OLSON
+
 
 def now():
     """
@@ -267,6 +269,9 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
 
     # Keep track of the timezones defined in the calendar
     timezones = {}
+    if 'X-WR-TIMEZONE' in calendar:
+        timezones[str(calendar['X-WR-TIMEZONE'])] = str(calendar['X-WR-TIMEZONE'])
+
     for c in calendar.walk('VTIMEZONE'):
         name = str(c['TZID'])
         try:
@@ -282,6 +287,8 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     # assume it applies globally, otherwise UTC
     if len(timezones) == 1:
         cal_tz = gettz(list(timezones)[0])
+        if not cal_tz and timezone in WINDOWS_TO_OLSON:
+            cal_tz = gettz(WINDOWS_TO_OLSON[str(c['TZID'])])
     else:
         cal_tz = UTC
 
