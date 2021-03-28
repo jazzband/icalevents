@@ -11,10 +11,9 @@ from dateutil.rrule import rrule, rruleset, rrulestr
 from dateutil.tz import UTC, gettz
 
 from icalendar import Calendar
+from icalendar.windows_to_olson import WINDOWS_TO_OLSON
 from icalendar.prop import vDDDLists, vText
 from pytz import timezone
-
-from icalendar.windows_to_olson import WINDOWS_TO_OLSON
 
 
 def now():
@@ -354,7 +353,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                             end_tz = timezone(str(e.end.tzinfo))
                         except:
                             pass
-        
+
             # If we've been passed or constructed start/end values
             # that are timezone naive, but the actual appointment
             # start and end times are in a timezone, convert start
@@ -443,7 +442,7 @@ def parse_rrule(component, tz=UTC):
             # Add exdates to the rruleset
             for exd in extract_exdates(component):
                 rule.exdate(exd.replace(tzinfo=None) if type(rdtstart) is date else exd)
-    
+
         # TODO: What about rdates and exrules?
 
     # You really want an rrule for a component without rrule? Here you are.
