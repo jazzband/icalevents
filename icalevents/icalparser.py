@@ -270,7 +270,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     # Keep track of the timezones defined in the calendar
     timezones = {}
     if 'X-WR-TIMEZONE' in calendar:
-        timezones[str(calendar['X-WR-TIMEZONE'])] = str(calendar['X-WR-TIMEZONE'])
+        timezones[str(calendar['X-WR-TIMEZONE'])] = gettz(str(calendar['X-WR-TIMEZONE']))
 
     for c in calendar.walk('VTIMEZONE'):
         name = str(c['TZID'])
@@ -287,7 +287,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     # assume it applies globally, otherwise UTC
     if len(timezones) == 1:
         cal_tz = gettz(list(timezones)[0])
-        if not cal_tz and timezone in WINDOWS_TO_OLSON:
+        if not cal_tz and str(c['TZID']) in WINDOWS_TO_OLSON:
             cal_tz = gettz(WINDOWS_TO_OLSON[str(c['TZID'])])
     else:
         cal_tz = UTC
@@ -320,8 +320,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
             # use it; otherwise, attempt to load the rules from pytz.
             start_tz = None
             end_tz = None
-
-            if e.all_day:
+            if e.all_day and e.recurring:
                 # Start and end times for all day events must not have
                 # a timezone because the specification forbids the
                 # RRULE UNTIL from having a timezone. On the other
@@ -355,7 +354,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                             end_tz = timezone(str(e.end.tzinfo))
                         except:
                             pass
-
+        
             # If we've been passed or constructed start/end values
             # that are timezone naive, but the actual appointment
             # start and end times are in a timezone, convert start

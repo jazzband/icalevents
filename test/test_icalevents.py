@@ -3,7 +3,7 @@ from icalevents import icalevents
 from datetime import date, timedelta, datetime
 from time import sleep
 from dateutil.relativedelta import relativedelta
-from dateutil.tz import UTC
+from dateutil.tz import UTC, gettz
 from re import search
 
 
@@ -260,3 +260,25 @@ class ICalEventsTests(unittest.TestCase):
         events = icalevents.events(url=None, file=ical, start=start, end=end)
         self.assertEqual(events[0].categories, ["In19-S04-IT2403"], "event 1 is not equal")
         self.assertEqual(events[1].categories, ["In19-S04-IT2406", "In19-S04-IT2405"], "event 2 is not equal")
+
+    def test_google_timezone(self):
+        ical = "test/test_data/google_tz.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        e1 = evs[0]
+        self.assertEqual(e1.start.hour, 0, "check start of the day")
+        self.assertEqual(e1.start.tzinfo, gettz('Europe/Zurich'), "check tz as specified in calendar")
+
+    def test_ms_timezone(self):
+        ical = "test/test_data/ms_tz.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        e1 = evs[0]
+        self.assertEqual(e1.start.hour, 0, "check start of the day")
+        self.assertEqual(e1.start.tzinfo, gettz('Europe/Berlin'), "check tz as specified in calendar")
