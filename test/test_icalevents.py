@@ -107,6 +107,32 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(ev_2.description, "All-day event recurring on tuesday each week")
         self.assertTrue(ev_2.all_day, "Recurring All-day Event's second instance is an all-day event")
 
+    def test_events_rrule_until_all_day_ms(self):
+        ical = "test/test_data/rrule_until_all_day_ms.ics"
+        start = date(2021, 1, 1)
+        end = date(2022, 1, 1)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        ev_0 = evs[0]
+
+        self.assertEqual(len(evs), 6, "Seven events and one is excluded")
+        self.assertEqual(ev_0.start, datetime(2021, 3, 19, 00, 0, 0))
+        self.assertEqual(ev_0.recurring, True, "Recurring all day event")
+        self.assertEqual(ev_0.summary, "Away")
+
+    def test_events_rrule_until_all_day_google(self):
+        ical = "test/test_data/rrule_until_all_day_google.ics"
+        start = date(2021, 1, 1)
+        end = date(2022, 1, 1)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        ev_2 = evs[2]
+
+        self.assertEqual(len(evs), 3)
+        self.assertEqual(ev_2.start, datetime(2021, 3, 24, 00, 0, 0, tzinfo=gettz('Europe/Zurich')))
+        self.assertEqual(ev_2.all_day, True, "All day event")
+        self.assertEqual(ev_2.summary, "Busy")
+
     def test_events_rrule_until(self):
         ical = "test/test_data/rrule_until.ics"
         start = date(2019, 4, 2)

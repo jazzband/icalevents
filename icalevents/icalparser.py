@@ -424,6 +424,11 @@ def parse_rrule(component, tz=UTC):
         if type(rdtstart) is datetime:
             rdtstart = normalize(rdtstart, tz=tz)
 
+        if type(rdtstart) is date:
+            for index, rru in enumerate(rrules):
+                if 'UNTIL' in rru:
+                    rrules[index]['UNTIL'] = [dt.date() if type(dt) is datetime else dt for dt in rru['UNTIL']]
+
         # Parse the rrules, might return a rruleset instance, instead of rrule
         rule = rrulestr('\n'.join(x.to_ical().decode() for x in rrules),
                         dtstart=rdtstart)
@@ -437,8 +442,8 @@ def parse_rrule(component, tz=UTC):
 
             # Add exdates to the rruleset
             for exd in extract_exdates(component):
-                rule.exdate(exd)
-
+                rule.exdate(exd.replace(tzinfo=None) if type(rdtstart) is date else exd)
+    
         # TODO: What about rdates and exrules?
 
     # You really want an rrule for a component without rrule? Here you are.
