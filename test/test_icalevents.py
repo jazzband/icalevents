@@ -116,7 +116,7 @@ class ICalEventsTests(unittest.TestCase):
         ev_0 = evs[0]
 
         self.assertEqual(len(evs), 6, "Seven events and one is excluded")
-        self.assertEqual(ev_0.start, datetime(2021, 3, 19, 00, 0, 0))
+        self.assertEqual(ev_0.start, datetime(2021, 3, 19, 00, 0, 0, tzinfo=gettz('Europe/Berlin')))
         self.assertEqual(ev_0.recurring, True, "Recurring all day event")
         self.assertEqual(ev_0.summary, "Away")
 
@@ -308,3 +308,21 @@ class ICalEventsTests(unittest.TestCase):
         e1 = evs[0]
         self.assertEqual(e1.start.hour, 0, "check start of the day")
         self.assertEqual(e1.start.tzinfo, gettz('Europe/Berlin'), "check tz as specified in calendar")
+
+    def test_recurence_id_ms(self):
+        ical = "test/test_data/recurrenceid_ms.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(len(evs), 41, "41 events in total - one was moved")
+
+    def test_recurence_id_google(self):
+        ical = "test/test_data/recurrenceid_google.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(len(evs), 4, "4 events in total")

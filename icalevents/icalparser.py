@@ -209,7 +209,8 @@ def create_event(component, tz=UTC):
     elif event.created:
         event.last_modified = event.created
 
-    if component.get('sequence'):
+    # sequence can be 0 - test for None instead
+    if not component.get('sequence') is None:
         event.sequence = component.get('sequence')
 
     if component.get("categories"):
@@ -295,12 +296,16 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     end = normalize(end, cal_tz)
 
     found = []
+    recurrence_ids = []
 
     # Skip dates that are stored as exceptions.
     exceptions = {}
     for component in calendar.walk():
         if component.name == "VEVENT":
             e = create_event(component, cal_tz)
+            
+            if 'RECURRENCE-ID' in component:
+                recurrence_ids.append((e.uid, component['RECURRENCE-ID'].dt, e.sequence))
 
             if 'EXDATE' in component:
                 # Deal with the fact that sometimes it's a list and
@@ -320,6 +325,10 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
             start_tz = None
             end_tz = None
             if e.all_day and e.recurring:
+                # Keep the timezone around if to apply later
+                start_tz = timezone(e.start.tzname())
+                end_tz = timezone(e.end.tzname())
+
                 # Start and end times for all day events must not have
                 # a timezone because the specification forbids the
                 # RRULE UNTIL from having a timezone. On the other
@@ -399,7 +408,8 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 exdate = "%04d%02d%02d" % (e.start.year, e.start.month, e.start.day)
                 if exdate not in exceptions:
                     found.append(e)
-    return found
+    # Filter out all events that are moved as indicated by the recurrence-id prop
+    return [event for event in found if e.sequence is None or not (event.uid, event.start, e.sequence) in recurrence_ids]
 
 
 def parse_rrule(component, tz=UTC):
