@@ -326,3 +326,12 @@ class ICalEventsTests(unittest.TestCase):
         evs = icalevents.events(file=ical, start=start, end=end)
 
         self.assertEqual(len(evs), 4, "4 events in total")
+
+    def test_cest(self):
+        ical = "test/test_data/cest.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(len(evs), 115, "4 events in total")

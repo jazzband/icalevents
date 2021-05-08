@@ -326,8 +326,8 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
             end_tz = None
             if e.all_day and e.recurring:
                 # Keep the timezone around if to apply later
-                start_tz = timezone(e.start.tzname())
-                end_tz = timezone(e.end.tzname())
+                start_tz = e.start.tzinfo
+                end_tz = e.end.tzinfo
 
                 # Start and end times for all day events must not have
                 # a timezone because the specification forbids the
@@ -350,7 +350,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                         start_tz = timezones[str(e.start.tzinfo)]
                     else:
                         try:
-                            start_tz = timezone(str(e.start.tzinfo))
+                            start_tz = e.start.tzinfo
                         except:
                             pass
 
@@ -359,7 +359,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                         end_tz = timezones[str(e.end.tzinfo)]
                     else:
                         try:
-                            end_tz = timezone(str(e.end.tzinfo))
+                            end_tz = e.end.tzinfo
                         except:
                             pass
 
@@ -378,8 +378,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
             if e.recurring:
                 # Unfold recurring events according to their rrule
                 rule = parse_rrule(component, cal_tz)
-                dur = e.end - e.start
-                after = start - dur
+                after = start - duration
 
                 for dt in rule.between(after, end, inc=True):
                     if start_tz is None:
@@ -390,7 +389,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                         # date of *this* occurrence. This handles the case where the
                         # recurrence has crossed over the daylight savings time boundary.
                         naive = datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
-                        dtstart = start_tz.localize(naive)
+                        dtstart = normalize(naive, tz=start_tz)
 
                         ecopy = e.copy_to(dtstart, e.uid)
 
