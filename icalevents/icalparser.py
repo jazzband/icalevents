@@ -40,6 +40,7 @@ class Event:
         self.start = None
         self.end = None
         self.all_day = True
+        self.transparent = False
         self.recurring = False
         self.location = None
         self.private = False
@@ -133,6 +134,7 @@ class Event:
         ne.attendee = self.attendee
         ne.organizer = self.organizer
         ne.private = self.private
+        ne.transparent = self.transparent
         ne.uid = uid
         ne.created = self.created
         ne.last_modified = self.last_modified
@@ -200,6 +202,9 @@ def create_event(component, tz=UTC):
     if component.get('class'):
         event_class = component.get('class')
         event.private = event_class == 'PRIVATE' or event_class == 'CONFIDENTIAL'
+
+    if component.get('class'):
+        event.transparent = component.get('transp') == 'TRANSPARENT'
 
     if component.get('created'):
         event.created = normalize(component.get('created').dt, tz)

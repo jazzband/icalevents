@@ -335,3 +335,13 @@ class ICalEventsTests(unittest.TestCase):
         evs = icalevents.events(file=ical, start=start, end=end)
 
         self.assertEqual(len(evs), 115, "4 events in total")
+
+    def test_transparent(self):
+        ical = "test/test_data/transparent.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1, e2] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(e1.transparent, True, "respect transparency")
+        self.assertEqual(e2.transparent, False, "respect opaqueness")
