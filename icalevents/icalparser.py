@@ -274,6 +274,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
 
     # Keep track of the timezones defined in the calendar
     timezones = {}
+    # Parse non standard timezone name
     if 'X-WR-TIMEZONE' in calendar:
         timezones[str(calendar['X-WR-TIMEZONE'])] = gettz(str(calendar['X-WR-TIMEZONE']))
 
