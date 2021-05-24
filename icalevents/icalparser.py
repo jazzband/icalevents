@@ -261,7 +261,7 @@ def get_timezone(tz_name):
 def adjust_timezone(component, dates, tz=None):
     # Remove timezone if none is present in component
     if isinstance(component['dtstart'].dt, date) or component['dtstart'].dt.tzinfo is None:
-        dates = [date.replace(tzinfo=None) for date in dates]
+        dates = [date.replace(tzinfo=None) if  type(date) is datetime else date for date in dates]
 
     # Add timezone if one is present in component
     if isinstance(component['dtstart'].dt, datetime) and not component['dtstart'].dt.tzinfo is None:
@@ -432,10 +432,11 @@ def parse_rrule(component, tz=UTC):
         if type(rdtstart) is datetime:
             rdtstart = normalize(rdtstart, tz=tz)
 
+        # Remove/add timezone to rrule until dates depending on component
         if type(rdtstart) is date:
             for index, rru in enumerate(rrules):
                 if 'UNTIL' in rru:
-                    rrules[index]['UNTIL'] = [dt.date() if type(dt) is datetime else dt for dt in rru['UNTIL']]
+                    rrules[index]['UNTIL'] = adjust_timezone(component, rru['UNTIL'], tz)
 
         # Parse the rrules, might return a rruleset instance, instead of rrule
         rule = rrulestr('\n'.join(x.to_ical().decode() for x in rrules),
