@@ -336,44 +336,24 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
             # use it; otherwise, attempt to load the rules from pytz.
             start_tz = None
             end_tz = None
-            if e.all_day and e.recurring:
-                # Keep the timezone around if to apply later
-                start_tz = e.start.tzinfo
-                end_tz = e.end.tzinfo
 
-                # Start and end times for all day events must not have
-                # a timezone because the specification forbids the
-                # RRULE UNTIL from having a timezone. On the other
-                # hand, they must be datetime values (not just dates)
-                # because RRULE UNTIL will do a comparison against a
-                # timezone naive datetime. So we coerce start and end
-                # times for all day events into timezone naive
-                # datetime values.
-                e.start = datetime.combine(e.start.date(), datetime.min.time())
-                e.end = datetime.combine(e.end.date(), datetime.min.time())
-                start = datetime.combine(start, datetime.min.time())
-                end = datetime.combine(end, datetime.min.time())
-            else:
-                # Work out the staring and ending timezone. We don't do
-                # this for all-day appointments because they aren't really
-                # in a timezone.
-                if e.start.tzinfo != UTC:
-                    if str(e.start.tzinfo) in timezones:
-                        start_tz = timezones[str(e.start.tzinfo)]
-                    else:
-                        try:
-                            start_tz = e.start.tzinfo
-                        except:
-                            pass
+            if e.start.tzinfo != UTC:
+                if str(e.start.tzinfo) in timezones:
+                    start_tz = timezones[str(e.start.tzinfo)]
+                else:
+                    try:
+                        start_tz = e.start.tzinfo
+                    except:
+                        pass
 
-                if e.end.tzinfo != UTC:
-                    if str(e.end.tzinfo) in timezones:
-                        end_tz = timezones[str(e.end.tzinfo)]
-                    else:
-                        try:
-                            end_tz = e.end.tzinfo
-                        except:
-                            pass
+            if e.end.tzinfo != UTC:
+                if str(e.end.tzinfo) in timezones:
+                    end_tz = timezones[str(e.end.tzinfo)]
+                else:
+                    try:
+                        end_tz = e.end.tzinfo
+                    except:
+                        pass
 
             # If we've been passed or constructed start/end values
             # that are timezone naive, but the actual appointment
@@ -391,6 +371,17 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 # Unfold recurring events according to their rrule
                 rule = parse_rrule(component, cal_tz)
                 after = start - duration
+                end = end
+
+                # Remove timezone if none is present in component
+                if isinstance(component['dtstart'].dt, date) or component['dtstart'].dt.tzinfo is None:
+                    after = after.replace(tzinfo=None)
+                    end = end.replace(tzinfo=None)
+
+                # Add timezone if one is present in component
+                if isinstance(component['dtstart'].dt, datetime) and not component['dtstart'].dt.tzinfo is None:
+                    after = normalize(after, start_tz)
+                    end = normalize(end, end_tz)
 
                 for dt in rule.between(after, end, inc=True):
                     if start_tz is None:
