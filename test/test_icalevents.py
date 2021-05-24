@@ -115,7 +115,7 @@ class ICalEventsTests(unittest.TestCase):
         evs = icalevents.events(file=ical, start=start, end=end)
         ev_0 = evs[0]
 
-        self.assertEqual(len(evs), 6, "Seven events and one is excluded")
+        self.assertEqual(len(evs), 6, "Seven events and one is excluded") # rrule_until_all_day_ms has one exdate (EXDATE;TZID=W. Europe Standard Time:20210430T000000)
         self.assertEqual(ev_0.start, datetime(2021, 3, 19, 00, 0, 0, tzinfo=gettz('Europe/Berlin')))
         self.assertEqual(ev_0.recurring, True, "Recurring all day event")
         self.assertEqual(ev_0.summary, "Away")
