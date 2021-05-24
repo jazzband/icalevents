@@ -251,6 +251,12 @@ def normalize(dt, tz=UTC):
     return dt
 
 
+def get_timezone(tz_name):
+    if tz_name in WINDOWS_TO_OLSON:
+        return gettz(WINDOWS_TO_OLSON[tz_name])
+    else:
+        return gettz(tz_name)
+
 def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     """
     Query the events occurring in a given time range.
@@ -274,9 +280,11 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
 
     # Keep track of the timezones defined in the calendar
     timezones = {}
+
     # Parse non standard timezone name
     if 'X-WR-TIMEZONE' in calendar:
-        timezones[str(calendar['X-WR-TIMEZONE'])] = gettz(str(calendar['X-WR-TIMEZONE']))
+        x_wr_timezone = str(calendar['X-WR-TIMEZONE'])
+        timezones[x_wr_timezone] = get_timezone(x_wr_timezone)
 
     for c in calendar.walk('VTIMEZONE'):
         name = str(c['TZID'])
@@ -292,9 +300,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     # If there's exactly one timezone in the file,
     # assume it applies globally, otherwise UTC
     if len(timezones) == 1:
-        cal_tz = gettz(list(timezones)[0])
-        if not cal_tz and str(c['TZID']) in WINDOWS_TO_OLSON:
-            cal_tz = gettz(WINDOWS_TO_OLSON[str(c['TZID'])])
+        cal_tz = get_timezone(list(timezones)[0])
     else:
         cal_tz = UTC
 
