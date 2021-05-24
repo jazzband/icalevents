@@ -341,19 +341,13 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 if str(e.start.tzinfo) in timezones:
                     start_tz = timezones[str(e.start.tzinfo)]
                 else:
-                    try:
-                        start_tz = e.start.tzinfo
-                    except:
-                        pass
+                    start_tz = e.start.tzinfo
 
             if e.end.tzinfo != UTC:
                 if str(e.end.tzinfo) in timezones:
                     end_tz = timezones[str(e.end.tzinfo)]
                 else:
-                    try:
-                        end_tz = e.end.tzinfo
-                    except:
-                        pass
+                    end_tz = e.end.tzinfo
 
             # If we've been passed or constructed start/end values
             # that are timezone naive, but the actual appointment
