@@ -257,6 +257,19 @@ def get_timezone(tz_name):
     else:
         return gettz(tz_name)
 
+
+def adjust_timezone(component, dates, tz=None):
+    # Remove timezone if none is present in component
+    if isinstance(component['dtstart'].dt, date) or component['dtstart'].dt.tzinfo is None:
+        dates = [date.replace(tzinfo=None) for date in dates]
+
+    # Add timezone if one is present in component
+    if isinstance(component['dtstart'].dt, datetime) and not component['dtstart'].dt.tzinfo is None:
+        dates = [normalize(date) for date in dates]
+
+    return dates
+
+
 def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     """
     Query the events occurring in a given time range.
@@ -364,18 +377,8 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
             if e.recurring:
                 # Unfold recurring events according to their rrule
                 rule = parse_rrule(component, cal_tz)
-                after = start - duration
-                end = end
-
-                # Remove timezone if none is present in component
-                if isinstance(component['dtstart'].dt, date) or component['dtstart'].dt.tzinfo is None:
-                    after = after.replace(tzinfo=None)
-                    end = end.replace(tzinfo=None)
-
-                # Add timezone if one is present in component
-                if isinstance(component['dtstart'].dt, datetime) and not component['dtstart'].dt.tzinfo is None:
-                    after = normalize(after, start_tz)
-                    end = normalize(end, end_tz)
+                [after] = adjust_timezone(component, [start - duration], start_tz)
+                [end] = adjust_timezone(component, [end], start_tz)
 
                 for dt in rule.between(after, end, inc=True):
                     if start_tz is None:
@@ -447,7 +450,7 @@ def parse_rrule(component, tz=UTC):
 
             # Add exdates to the rruleset
             for exd in extract_exdates(component):
-                rule.exdate(exd.replace(tzinfo=None) if type(rdtstart) is date else exd)
+                rule.exdate(exd)
 
         # TODO: What about rdates and exrules?
 
@@ -476,4 +479,4 @@ def extract_exdates(component):
         elif isinstance(exd_prop, vDDDLists):
             dates.extend(normalize(exd.dt) for exd in exd_prop.dts)
 
-    return dates
+    return adjust_timezone(component, dates)
