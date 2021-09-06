@@ -408,7 +408,10 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 if exdate not in exceptions:
                     found.append(e)
     # Filter out all events that are moved as indicated by the recurrence-id prop
-    return [event for event in found if e.sequence is None or not (event.uid, event.start, e.sequence) in recurrence_ids]
+    return [
+        event for event in found 
+        if e.sequence is None or not (event.uid, event.start, e.sequence) in recurrence_ids
+    ]
 
 
 def parse_rrule(component, tz=UTC):
