@@ -1,6 +1,7 @@
 # iCalEvents
 
 Simple Python 3 library to download, parse and query iCal sources.
+[![Jazzband](https://jazzband.co/static/img/badge.svg)](https://jazzband.co/)
 
 ## Build info
 
