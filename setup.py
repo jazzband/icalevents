@@ -16,8 +16,8 @@ setup(
     description = 'iCal downloader and parser',
     author = 'Thomas Irgang',
     author_email = 'thomas@irgang-la.de',
-    url = 'https://github.com/irgangla/icalevents',
-    download_url = 'https://github.com/irgangla/icalevents/archive/v' + version + '.tar.gz',
+    url = 'https://github.com/jazzband/icalevents',
+    download_url = 'https://github.com/jazzband/icalevents/archive/v' + version + '.tar.gz',
     keywords = ['iCal'],
     classifiers = [
         'Programming Language :: Python',
