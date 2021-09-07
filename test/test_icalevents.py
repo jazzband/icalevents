@@ -9,7 +9,7 @@ from re import search
 
 class ICalEventsTests(unittest.TestCase):
     def test_events_url(self):
-        url = "https://raw.githubusercontent.com/irgangla/icalevents/master/test/test_data/basic.ics"
+        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
         start = date(2017, 5, 18)
         end = date(2017, 5, 19)
 
@@ -151,7 +151,7 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(e2.recurring, True, "check recurring=True for recurring event (2)")
 
     def test_events_async_url(self):
-        url = "https://raw.githubusercontent.com/irgangla/icalevents/master/test/test_data/basic.ics"
+        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
         start = date(2017, 5, 18)
         end = date(2017, 5, 19)
         key = "basic"
