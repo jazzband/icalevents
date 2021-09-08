@@ -6,6 +6,8 @@ Simple Python 3 library to download, parse and query iCal sources.
 
 ## Build info
 
+![run pytest](https://github.com/jazzband/icalevents/actions/workflows/python-test.yml/badge.svg)
+
 See Github Action [run pytest](https://github.com/jazzband/icalevents/actions)
 
 [![codecov](https://codecov.io/gh/irgangla/icalevents/branch/master/graph/badge.svg)](https://codecov.io/gh/irgangla/icalevents)
