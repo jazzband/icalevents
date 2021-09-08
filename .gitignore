@@ -8,3 +8,5 @@ dist/*
 MANIFEST
 icalevents.egg-info/*
 /build
+
+docs/_build/**
