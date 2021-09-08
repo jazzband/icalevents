@@ -14,6 +14,10 @@ https://travis-ci.org/irgangla/icalevents
 
 https://codecov.io/gh/irgangla/icalevents
 
+## Documentation
+
+https://icalevents.readthedocs.io/en/latest/
+
 ## Usage
 
 ### iCloud:
