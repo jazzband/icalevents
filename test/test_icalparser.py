@@ -100,7 +100,7 @@ class ICalParserTests(unittest.TestCase):
     def test_organizer(self):
         self.assertIsInstance(self.eventA.organizer, str)
         self.assertIsInstance(self.eventB.organizer, str)
-        
+
     def test_str(self):
         self.eventA.start = datetime(year=2017, month=2, day=3, hour=12, minute=5)
         self.eventA.end = datetime(year=2017, month=2, day=3, hour=15, minute=5)
