@@ -36,7 +36,7 @@ es  = events(<Google Calendar URL>)
 
 # Contributing
 
-You will need [pipenv](https://pipenv.pypa.io/en/latest/) and [pre-commit](https://pre-commit.com/index.html) installed and than run.
+You will need [poetry](https://github.com/python-poetry/poetry) and [pre-commit](https://pre-commit.com/index.html) installed and than run.
 
 ```bash
 pre-commit install
