@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 from setuptools import setup
 
-version = '0.1.25'
+version = "0.1.25"
 
 setup(
-    name = 'icalevents',
-    packages = ['icalevents'],
+    name="icalevents",
+    packages=["icalevents"],
     install_requires=[
         "httplib2",
         "icalendar",
@@ -13,27 +13,29 @@ setup(
         "datetime",
     ],
     version=version,
-    description = 'iCal downloader and parser',
-    author = 'Thomas Irgang',
-    author_email = 'thomas@irgang-la.de',
-    url = 'https://github.com/jazzband/icalevents',
-    download_url = 'https://github.com/jazzband/icalevents/archive/v' + version + '.tar.gz',
-    keywords = ['iCal'],
-    classifiers = [
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Development Status :: 4 - Beta',
-        'Environment :: Other Environment',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Operating System :: OS Independent',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        ],
-    long_description = """\
+    description="iCal downloader and parser",
+    author="Thomas Irgang",
+    author_email="thomas@irgang-la.de",
+    url="https://github.com/jazzband/icalevents",
+    download_url="https://github.com/jazzband/icalevents/archive/v"
+    + version
+    + ".tar.gz",
+    keywords=["iCal"],
+    classifiers=[
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Development Status :: 4 - Beta",
+        "Environment :: Other Environment",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Operating System :: OS Independent",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ],
+    long_description="""\
 iCal download, parse and query tool
 -------------------------------------
 
@@ -44,5 +46,5 @@ See: icalevents.icalevents.events(url=None, file=None, start=None, end=None, fix
 
 This version requires Python 3 or later.
 
-"""
+""",
 )

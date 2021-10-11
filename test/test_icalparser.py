@@ -5,12 +5,15 @@ from dateutil.tz import UTC, gettz
 
 
 class ICalParserTests(unittest.TestCase):
-
     def setUp(self):
         self.eventA = icalevents.icalparser.Event()
         self.eventA.uid = 1234
-        self.eventA.start = datetime(year=2017, month=2, day=3, hour=12, minute=5, tzinfo=UTC)
-        self.eventA.end = datetime(year=2017, month=2, day=3, hour=15, minute=5, tzinfo=UTC)
+        self.eventA.start = datetime(
+            year=2017, month=2, day=3, hour=12, minute=5, tzinfo=UTC
+        )
+        self.eventA.end = datetime(
+            year=2017, month=2, day=3, hour=15, minute=5, tzinfo=UTC
+        )
         self.eventA.all_day = False
         self.eventA.summary = "Event A"
         self.eventA.attendee = "name@example.com"
@@ -18,15 +21,19 @@ class ICalParserTests(unittest.TestCase):
 
         self.eventB = icalevents.icalparser.Event()
         self.eventB.uid = 1234
-        self.eventB.start = datetime(year=2017, month=2, day=1, hour=15, minute=5, tzinfo=UTC)
-        self.eventB.end = datetime(year=2017, month=2, day=1, hour=16, minute=5, tzinfo=UTC)
+        self.eventB.start = datetime(
+            year=2017, month=2, day=1, hour=15, minute=5, tzinfo=UTC
+        )
+        self.eventB.end = datetime(
+            year=2017, month=2, day=1, hour=16, minute=5, tzinfo=UTC
+        )
         self.eventB.all_day = False
         self.eventB.summary = "Event B"
         self.eventB.attendee = ["name@example.com", "another@example.com"]
         self.eventB.organizer = "name@example.com"
 
         self.dtA = datetime(2018, 6, 21, 12)
-        self.dtB = datetime(2018, 6, 21, 12, tzinfo=gettz('Europe/Berlin'))
+        self.dtB = datetime(2018, 6, 21, 12, tzinfo=gettz("Europe/Berlin"))
 
     def test_now(self):
         n = icalevents.icalparser.now()
@@ -47,16 +54,24 @@ class ICalParserTests(unittest.TestCase):
 
         self.assertNotEqual(eventC.uid, self.eventA.uid, "new event has new UID")
         self.assertEqual(eventC.start, new_start, "new event has new start")
-        self.assertEqual(eventC.end - eventC.start, self.eventA.end - self.eventA.start, "new event has same duration")
+        self.assertEqual(
+            eventC.end - eventC.start,
+            self.eventA.end - self.eventA.start,
+            "new event has same duration",
+        )
         self.assertEqual(eventC.all_day, False, "new event is no all day event")
         self.assertEqual(eventC.summary, self.eventA.summary, "copy to: summary")
-        self.assertEqual(eventC.description, self.eventA.description, "copy to: description")
+        self.assertEqual(
+            eventC.description, self.eventA.description, "copy to: description"
+        )
 
         eventD = eventC.copy_to(uid=new_uid)
         self.assertEqual(eventD.uid, new_uid, "new event has specified UID")
         self.assertEqual(eventD.start, eventC.start, "new event has same start")
         self.assertEqual(eventD.end, eventC.end, "new event has same end")
-        self.assertEqual(eventD.all_day, eventC.all_day, "new event is no all day event")
+        self.assertEqual(
+            eventD.all_day, eventC.all_day, "new event is no all day event"
+        )
         self.assertEqual(eventD.summary, eventC.summary, "copy to: summary")
         self.assertEqual(eventD.description, eventC.description, "copy to: description")
 
@@ -104,4 +119,4 @@ class ICalParserTests(unittest.TestCase):
     def test_str(self):
         self.eventA.start = datetime(year=2017, month=2, day=3, hour=12, minute=5)
         self.eventA.end = datetime(year=2017, month=2, day=3, hour=15, minute=5)
-        self.assertEqual('2017-02-03 12:05:00+00:00: Event A (ended)', str(self.eventA))
+        self.assertEqual("2017-02-03 12:05:00+00:00: Event A (ended)", str(self.eventA))

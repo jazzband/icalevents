@@ -1,10 +1,10 @@
 from icalevents.icalevents import events_async, latest_events, all_done
 from time import sleep
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     keys = []
 
-    with open('calendars.txt', mode='r', encoding='utf-8') as f:
+    with open("calendars.txt", mode="r", encoding="utf-8") as f:
         counter = 1
 
         while True:
@@ -17,7 +17,7 @@ if __name__ == '__main__':
             url = url.strip()
 
             fix_apple = False
-            if name == 'icloud':
+            if name == "icloud":
                 fix_apple = True
 
             key = "req_%d" % counter

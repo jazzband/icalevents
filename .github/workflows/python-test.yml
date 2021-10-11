@@ -24,10 +24,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install pipenv==v2021.5.29
           pipenv install --dev --deploy
-      - name: Lint with black and flake
-        run: |
-          pipenv run black --check icalevents
-          pipenv run flake8 . --count --exit-zero
       - name: Test with pytest
         run: |
           pipenv run coverage run test.py
