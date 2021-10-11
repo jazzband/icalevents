@@ -92,4 +92,3 @@ DTSTART:19180331T020000
             # Delete tmp dir
             os.chdir("..")
             shutil.rmtree("tmp")
-
