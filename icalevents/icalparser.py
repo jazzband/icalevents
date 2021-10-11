@@ -66,7 +66,9 @@ class Event:
         :return: True if start of this event is smaller than other
         """
         if not other or not isinstance(other, Event):
-            raise ValueError('Only events can be compared with each other! Other is %s' % type(other))
+            raise ValueError(
+                "Only events can be compared with each other! Other is %s" % type(other)
+            )
         else:
             return self.start < other.start
 
@@ -124,7 +126,7 @@ class Event:
 
         if self.end:
             duration = self.end - self.start
-            ne.end = (new_start + duration)
+            ne.end = new_start + duration
 
         ne.all_day = self.all_day
         ne.recurring = self.recurring
@@ -146,7 +148,7 @@ def encode(value: Optional[vText]) -> Optional[str]:
     try:
         return str(value)
     except UnicodeEncodeError:
-        return str(value.encode('utf-8'))
+        return str(value.encode("utf-8"))
 
 
 def create_event(component, tz=UTC):
@@ -160,56 +162,56 @@ def create_event(component, tz=UTC):
 
     event = Event()
 
-    event.start = normalize(component.get('dtstart').dt, tz=tz)
+    event.start = normalize(component.get("dtstart").dt, tz=tz)
 
-    if component.get('dtend'):
-        event.end = normalize(component.get('dtend').dt, tz=tz)
-    elif component.get('duration'): # compute implicit end as start + duration
-        event.end = event.start + component.get('duration').dt
-    else: # compute implicit end as start + 0
+    if component.get("dtend"):
+        event.end = normalize(component.get("dtend").dt, tz=tz)
+    elif component.get("duration"):  # compute implicit end as start + duration
+        event.end = event.start + component.get("duration").dt
+    else:  # compute implicit end as start + 0
         event.end = event.start
 
-    event.summary = encode(component.get('summary'))
-    event.description = encode(component.get('description'))
-    event.all_day = type(component.get('dtstart').dt) is date
-    if component.get('rrule'):
+    event.summary = encode(component.get("summary"))
+    event.description = encode(component.get("description"))
+    event.all_day = type(component.get("dtstart").dt) is date
+    if component.get("rrule"):
         event.recurring = True
-    event.location = encode(component.get('location'))
+    event.location = encode(component.get("location"))
 
-    if component.get('attendee'):
-        event.attendee = component.get('attendee')
+    if component.get("attendee"):
+        event.attendee = component.get("attendee")
         if type(event.attendee) is list:
             temp = []
             for a in event.attendee:
-                temp.append(a.encode('utf-8').decode('ascii'))
+                temp.append(a.encode("utf-8").decode("ascii"))
             event.attendee = temp
         else:
-            event.attendee = event.attendee.encode('utf-8').decode('ascii')
+            event.attendee = event.attendee.encode("utf-8").decode("ascii")
     else:
         event.attendee = str(None)
 
-    if component.get('uid'):
-        event.uid = component.get('uid').encode('utf-8').decode('ascii')
+    if component.get("uid"):
+        event.uid = component.get("uid").encode("utf-8").decode("ascii")
 
-    if component.get('organizer'):
-        event.organizer = component.get('organizer').encode('utf-8').decode('ascii')
+    if component.get("organizer"):
+        event.organizer = component.get("organizer").encode("utf-8").decode("ascii")
     else:
         event.organizer = str(None)
 
-    if component.get('class'):
-        event_class = component.get('class')
-        event.private = event_class == 'PRIVATE' or event_class == 'CONFIDENTIAL'
+    if component.get("class"):
+        event_class = component.get("class")
+        event.private = event_class == "PRIVATE" or event_class == "CONFIDENTIAL"
 
-    if component.get('created'):
-        event.created = normalize(component.get('created').dt, tz)
+    if component.get("created"):
+        event.created = normalize(component.get("created").dt, tz)
 
-    if component.get('last-modified'):
-        event.last_modified = normalize(component.get('last-modified').dt, tz)
+    if component.get("last-modified"):
+        event.last_modified = normalize(component.get("last-modified").dt, tz)
     elif event.created:
         event.last_modified = event.created
 
-    if component.get('sequence'):
-        event.sequence = component.get('sequence')
+    if component.get("sequence"):
+        event.sequence = component.get("sequence")
 
     if component.get("categories"):
         categories = component.get("categories").cats
@@ -261,14 +263,14 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
         end = start + default_span
 
     if not content:
-        raise ValueError('Content is invalid!')
+        raise ValueError("Content is invalid!")
 
     calendar = Calendar.from_ical(content)
 
     # Keep track of the timezones defined in the calendar
     timezones = {}
-    for c in calendar.walk('VTIMEZONE'):
-        name = str(c['TZID'])
+    for c in calendar.walk("VTIMEZONE"):
+        name = str(c["TZID"])
         try:
             timezones[name] = c.to_tz()
         except IndexError:
@@ -296,14 +298,14 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
         if component.name == "VEVENT":
             e = create_event(component, cal_tz)
 
-            if 'EXDATE' in component:
+            if "EXDATE" in component:
                 # Deal with the fact that sometimes it's a list and
                 # sometimes it's a singleton
                 exlist = []
-                if isinstance(component['EXDATE'], list):
-                    exlist = component['EXDATE']
+                if isinstance(component["EXDATE"], list):
+                    exlist = component["EXDATE"]
                 else:
-                    exlist.append(component['EXDATE'])
+                    exlist.append(component["EXDATE"])
                 for ex in exlist:
                     exdate = ex.to_ical().decode("UTF-8")
                     exceptions[exdate[0:8]] = exdate
@@ -375,7 +377,9 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                         # Recompute the start time in the current timezone *on* the
                         # date of *this* occurrence. This handles the case where the
                         # recurrence has crossed over the daylight savings time boundary.
-                        naive = datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+                        naive = datetime(
+                            dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second
+                        )
                         dtstart = start_tz.localize(naive)
 
                         ecopy = e.copy_to(dtstart, e.uid)
@@ -387,7 +391,11 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                         # timezone from the start time, we'll have lost that.
                         ecopy.end = dtstart + duration
 
-                    exdate = "%04d%02d%02d" % (ecopy.start.year, ecopy.start.month, ecopy.start.day)
+                    exdate = "%04d%02d%02d" % (
+                        ecopy.start.year,
+                        ecopy.start.month,
+                        ecopy.start.day,
+                    )
                     if exdate not in exceptions:
                         found.append(ecopy)
             elif e.end >= start and e.start <= end:
@@ -407,22 +415,23 @@ def parse_rrule(component, tz=UTC):
     :param tz: timezone for DST handling
     :return: extracted rrule or rruleset
     """
-    if component.get('rrule'):
+    if component.get("rrule"):
         # component['rrule'] can be both a scalar and a list
-        rrules = component['rrule']
+        rrules = component["rrule"]
         if not isinstance(rrules, list):
             rrules = [rrules]
 
         # If dtstart is a datetime, make sure it's in a timezone.
-        rdtstart = component['dtstart'].dt
+        rdtstart = component["dtstart"].dt
         if type(rdtstart) is datetime:
             rdtstart = normalize(rdtstart, tz=tz)
 
         # Parse the rrules, might return a rruleset instance, instead of rrule
-        rule = rrulestr('\n'.join(x.to_ical().decode() for x in rrules),
-                        dtstart=rdtstart)
+        rule = rrulestr(
+            "\n".join(x.to_ical().decode() for x in rrules), dtstart=rdtstart
+        )
 
-        if component.get('exdate'):
+        if component.get("exdate"):
             # Make sure, to work with a rruleset
             if isinstance(rule, rrule):
                 rules = rruleset()
@@ -438,7 +447,7 @@ def parse_rrule(component, tz=UTC):
     # You really want an rrule for a component without rrule? Here you are.
     else:
         rule = rruleset()
-        rule.rdate(normalize(component['dtstart'].dt, tz=tz))
+        rule.rdate(normalize(component["dtstart"].dt, tz=tz))
 
     return rule
 
@@ -452,9 +461,9 @@ def extract_exdates(component):
     """
     dates = []
 
-    exd_prop = component.get('exdate')
+    exd_prop = component.get("exdate")
     if exd_prop:
-        if isinstance(exd_prop, list): # In case there is more than one exdate property
+        if isinstance(exd_prop, list):  # In case there is more than one exdate property
             for exd_list in exd_prop:
                 dates.extend(normalize(exd.dt) for exd in exd_list.dts)
         elif isinstance(exd_prop, vDDDLists):
