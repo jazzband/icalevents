@@ -132,8 +132,12 @@ class ICalEventsTests(unittest.TestCase):
         evs = icalevents.events(file=ical, start=start, end=end)
         ev_0 = evs[0]
 
-        self.assertEqual(len(evs), 6, "Seven events and one is excluded") # rrule_until_all_day_ms has one exdate (EXDATE;TZID=W. Europe Standard Time:20210430T000000)
-        self.assertEqual(ev_0.start, datetime(2021, 3, 19, 00, 0, 0, tzinfo=gettz('Europe/Berlin')))
+        self.assertEqual(
+            len(evs), 6, "Seven events and one is excluded"
+        )  # rrule_until_all_day_ms has one exdate (EXDATE;TZID=W. Europe Standard Time:20210430T000000)
+        self.assertEqual(
+            ev_0.start, datetime(2021, 3, 19, 00, 0, 0, tzinfo=gettz("Europe/Berlin"))
+        )
         self.assertEqual(ev_0.recurring, True, "Recurring all day event")
         self.assertEqual(ev_0.summary, "Away")
 
@@ -146,7 +150,9 @@ class ICalEventsTests(unittest.TestCase):
         ev_2 = evs[2]
 
         self.assertEqual(len(evs), 3)
-        self.assertEqual(ev_2.start, datetime(2021, 3, 24, 00, 0, 0, tzinfo=gettz('Europe/Zurich')))
+        self.assertEqual(
+            ev_2.start, datetime(2021, 3, 24, 00, 0, 0, tzinfo=gettz("Europe/Zurich"))
+        )
         self.assertEqual(ev_2.all_day, True, "All day event")
         self.assertEqual(ev_2.summary, "Busy")
 
@@ -344,8 +350,14 @@ class ICalEventsTests(unittest.TestCase):
         start = date(2020, 11, 10)
         end = date(2020, 11, 19)
         events = icalevents.events(url=None, file=ical, start=start, end=end)
-        self.assertEqual(events[0].categories, ["In19-S04-IT2403"], "event 1 is not equal")
-        self.assertEqual(events[1].categories, ["In19-S04-IT2406", "In19-S04-IT2405"], "event 2 is not equal")
+        self.assertEqual(
+            events[0].categories, ["In19-S04-IT2403"], "event 1 is not equal"
+        )
+        self.assertEqual(
+            events[1].categories,
+            ["In19-S04-IT2406", "In19-S04-IT2405"],
+            "event 2 is not equal",
+        )
 
     def test_google_timezone(self):
         ical = "test/test_data/google_tz.ics"
@@ -356,7 +368,9 @@ class ICalEventsTests(unittest.TestCase):
 
         e1 = evs[0]
         self.assertEqual(e1.start.hour, 0, "check start of the day")
-        self.assertEqual(e1.start.tzinfo, gettz('Europe/Zurich'), "check tz as specified in calendar")
+        self.assertEqual(
+            e1.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
+        )
 
     def test_ms_timezone(self):
         ical = "test/test_data/ms_tz.ics"
@@ -367,7 +381,9 @@ class ICalEventsTests(unittest.TestCase):
 
         e1 = evs[0]
         self.assertEqual(e1.start.hour, 0, "check start of the day")
-        self.assertEqual(e1.start.tzinfo, gettz('Europe/Berlin'), "check tz as specified in calendar")
+        self.assertEqual(
+            e1.start.tzinfo, gettz("Europe/Berlin"), "check tz as specified in calendar"
+        )
 
     def test_recurence_id_ms(self):
         ical = "test/test_data/recurrenceid_ms.ics"
