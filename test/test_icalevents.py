@@ -3,7 +3,7 @@ from icalevents import icalevents
 from datetime import date, timedelta, datetime
 from time import sleep
 from dateutil.relativedelta import relativedelta
-from dateutil.tz import UTC
+from dateutil.tz import UTC, gettz
 from re import search
 
 
@@ -123,6 +123,38 @@ class ICalEventsTests(unittest.TestCase):
             ev_2.all_day,
             "Recurring All-day Event's second instance is an all-day event",
         )
+
+    def test_events_rrule_until_all_day_ms(self):
+        ical = "test/test_data/rrule_until_all_day_ms.ics"
+        start = date(2021, 1, 1)
+        end = date(2022, 1, 1)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        ev_0 = evs[0]
+
+        self.assertEqual(
+            len(evs), 6, "Seven events and one is excluded"
+        )  # rrule_until_all_day_ms has one exdate (EXDATE;TZID=W. Europe Standard Time:20210430T000000)
+        self.assertEqual(
+            ev_0.start, datetime(2021, 3, 19, 00, 0, 0, tzinfo=gettz("Europe/Berlin"))
+        )
+        self.assertEqual(ev_0.recurring, True, "Recurring all day event")
+        self.assertEqual(ev_0.summary, "Away")
+
+    def test_events_rrule_until_all_day_google(self):
+        ical = "test/test_data/rrule_until_all_day_google.ics"
+        start = date(2021, 1, 1)
+        end = date(2022, 1, 1)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        ev_2 = evs[2]
+
+        self.assertEqual(len(evs), 3)
+        self.assertEqual(
+            ev_2.start, datetime(2021, 3, 24, 00, 0, 0, tzinfo=gettz("Europe/Zurich"))
+        )
+        self.assertEqual(ev_2.all_day, True, "All day event")
+        self.assertEqual(ev_2.summary, "Busy")
 
     def test_events_rrule_until(self):
         ical = "test/test_data/rrule_until.ics"
@@ -326,3 +358,66 @@ class ICalEventsTests(unittest.TestCase):
             ["In19-S04-IT2406", "In19-S04-IT2405"],
             "event 2 is not equal",
         )
+
+    def test_google_timezone(self):
+        ical = "test/test_data/google_tz.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        e1 = evs[0]
+        self.assertEqual(e1.start.hour, 0, "check start of the day")
+        self.assertEqual(
+            e1.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
+        )
+
+    def test_ms_timezone(self):
+        ical = "test/test_data/ms_tz.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        e1 = evs[0]
+        self.assertEqual(e1.start.hour, 0, "check start of the day")
+        self.assertEqual(
+            e1.start.tzinfo, gettz("Europe/Berlin"), "check tz as specified in calendar"
+        )
+
+    def test_recurence_id_ms(self):
+        ical = "test/test_data/recurrenceid_ms.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(len(evs), 41, "41 events in total - one was moved")
+
+    def test_recurence_id_google(self):
+        ical = "test/test_data/recurrenceid_google.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(len(evs), 4, "4 events in total")
+
+    def test_cest(self):
+        ical = "test/test_data/cest.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(len(evs), 115, "4 events in total")
+
+    def test_transparent(self):
+        ical = "test/test_data/transparent.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1, e2] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(e1.transparent, True, "respect transparency")
+        self.assertEqual(e2.transparent, False, "respect opaqueness")
