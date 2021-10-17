@@ -34,4 +34,4 @@ jobs:
         with:
           user: jazzband
           password: ${{ secrets.JAZZBAND_RELEASE_KEY }}
-          repository_url: https://jazzband.co/projects/django-formtools/upload
+          repository_url: https://jazzband.co/projects/icalevents/upload
