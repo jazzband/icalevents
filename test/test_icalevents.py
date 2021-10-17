@@ -429,9 +429,7 @@ class ICalEventsTests(unittest.TestCase):
 
         [e1] = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(
-            e1.attendee[0].params["PARTSTAT"], "DECLINED", "add paarams"
-        )
+        self.assertEqual(e1.attendee[0].params["PARTSTAT"], "DECLINED", "add paarams")
 
         self.assertEqual(
             e1.attendee[0], "mailto:calendar@gmail.com", "still is like a string"
