@@ -2,15 +2,17 @@
 
 Simple Python 3 library to download, parse and query iCal sources.
 
+[![Jazzband](https://jazzband.co/static/img/badge.svg)](https://jazzband.co/)
+
 ## Build info
 
-[![Build Status](https://travis-ci.org/irgangla/icalevents.svg?branch=master)](https://travis-ci.org/irgangla/icalevents)
+last push: ![run pytest](https://github.com/jazzband/icalevents/actions/workflows/python-test.yml/badge.svg)
 
-https://travis-ci.org/irgangla/icalevents
+master: [![Run pytest](https://github.com/jazzband/icalevents/actions/workflows/python-test.yml/badge.svg?branch=master)](https://github.com/jazzband/icalevents/actions/workflows/python-test.yml)
 
-[![codecov](https://codecov.io/gh/irgangla/icalevents/branch/master/graph/badge.svg)](https://codecov.io/gh/irgangla/icalevents)
+## Documentation
 
-https://codecov.io/gh/irgangla/icalevents
+https://icalevents.readthedocs.io/en/latest/
 
 ## Usage
 
@@ -31,3 +33,13 @@ from icalevents.icalevents import events
 
 es  = events(<Google Calendar URL>)
 ```
+
+# Contributing
+
+You will need [poetry](https://github.com/python-poetry/poetry) and [pre-commit](https://pre-commit.com/index.html) installed and than run.
+
+```bash
+pre-commit install
+```
+
+Happy contributing!
