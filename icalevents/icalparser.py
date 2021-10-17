@@ -25,12 +25,15 @@ def now():
     return datetime.now(UTC)
 
 
-class Attendee:
+class Attendee(str):
     def __init__(self, address):
         self.address = address
 
     def __str__(self):
         return self.address.encode("utf-8").decode("ascii")
+
+    def __repr__(self):
+        return self.__str__()
 
     @property
     def params(self):
