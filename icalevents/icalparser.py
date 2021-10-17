@@ -11,6 +11,7 @@ from dateutil.rrule import rrule, rruleset, rrulestr
 from dateutil.tz import UTC, gettz
 
 from icalendar import Calendar
+from icalendar.windows_to_olson import WINDOWS_TO_OLSON
 from icalendar.prop import vDDDLists, vText
 from pytz import timezone
 
@@ -39,6 +40,7 @@ class Event:
         self.start = None
         self.end = None
         self.all_day = True
+        self.transparent = False
         self.recurring = False
         self.location = None
         self.private = False
@@ -134,6 +136,7 @@ class Event:
         ne.attendee = self.attendee
         ne.organizer = self.organizer
         ne.private = self.private
+        ne.transparent = self.transparent
         ne.uid = uid
         ne.created = self.created
         ne.last_modified = self.last_modified
@@ -202,6 +205,9 @@ def create_event(component, tz=UTC):
         event_class = component.get("class")
         event.private = event_class == "PRIVATE" or event_class == "CONFIDENTIAL"
 
+    if component.get("class"):
+        event.transparent = component.get("transp") == "TRANSPARENT"
+
     if component.get("created"):
         event.created = normalize(component.get("created").dt, tz)
 
@@ -210,7 +216,8 @@ def create_event(component, tz=UTC):
     elif event.created:
         event.last_modified = event.created
 
-    if component.get("sequence"):
+    # sequence can be 0 - test for None instead
+    if not component.get("sequence") is None:
         event.sequence = component.get("sequence")
 
     if component.get("categories"):
@@ -246,6 +253,34 @@ def normalize(dt, tz=UTC):
     return dt
 
 
+def get_timezone(tz_name):
+    if tz_name in WINDOWS_TO_OLSON:
+        return gettz(WINDOWS_TO_OLSON[tz_name])
+    else:
+        return gettz(tz_name)
+
+
+def adjust_timezone(component, dates, tz=None):
+    # Remove timezone if none is present in component
+    if (
+        isinstance(component["dtstart"].dt, date)
+        or component["dtstart"].dt.tzinfo is None
+    ):
+        dates = [
+            date.replace(tzinfo=None) if type(date) is datetime else date
+            for date in dates
+        ]
+
+    # Add timezone if one is present in component
+    if (
+        isinstance(component["dtstart"].dt, datetime)
+        and not component["dtstart"].dt.tzinfo is None
+    ):
+        dates = [normalize(date) for date in dates]
+
+    return dates
+
+
 def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     """
     Query the events occurring in a given time range.
@@ -269,6 +304,12 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
 
     # Keep track of the timezones defined in the calendar
     timezones = {}
+
+    # Parse non standard timezone name
+    if "X-WR-TIMEZONE" in calendar:
+        x_wr_timezone = str(calendar["X-WR-TIMEZONE"])
+        timezones[x_wr_timezone] = get_timezone(x_wr_timezone)
+
     for c in calendar.walk("VTIMEZONE"):
         name = str(c["TZID"])
         try:
@@ -283,7 +324,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     # If there's exactly one timezone in the file,
     # assume it applies globally, otherwise UTC
     if len(timezones) == 1:
-        cal_tz = gettz(list(timezones)[0])
+        cal_tz = get_timezone(list(timezones)[0])
     else:
         cal_tz = UTC
 
@@ -291,12 +332,18 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     end = normalize(end, cal_tz)
 
     found = []
+    recurrence_ids = []
 
     # Skip dates that are stored as exceptions.
     exceptions = {}
     for component in calendar.walk():
         if component.name == "VEVENT":
             e = create_event(component, cal_tz)
+
+            if "RECURRENCE-ID" in component:
+                recurrence_ids.append(
+                    (e.uid, component["RECURRENCE-ID"].dt, e.sequence)
+                )
 
             if "EXDATE" in component:
                 # Deal with the fact that sometimes it's a list and
@@ -316,40 +363,17 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
             start_tz = None
             end_tz = None
 
-            if e.all_day:
-                # Start and end times for all day events must not have
-                # a timezone because the specification forbids the
-                # RRULE UNTIL from having a timezone. On the other
-                # hand, they must be datetime values (not just dates)
-                # because RRULE UNTIL will do a comparison against a
-                # timezone naive datetime. So we coerce start and end
-                # times for all day events into timezone naive
-                # datetime values.
-                e.start = datetime.combine(e.start.date(), datetime.min.time())
-                e.end = datetime.combine(e.end.date(), datetime.min.time())
-                start = datetime.combine(start, datetime.min.time())
-                end = datetime.combine(end, datetime.min.time())
-            else:
-                # Work out the staring and ending timezone. We don't do
-                # this for all-day appointments because they aren't really
-                # in a timezone.
-                if e.start.tzinfo != UTC:
-                    if str(e.start.tzinfo) in timezones:
-                        start_tz = timezones[str(e.start.tzinfo)]
-                    else:
-                        try:
-                            start_tz = timezone(str(e.start.tzinfo))
-                        except:
-                            pass
+            if e.start.tzinfo != UTC:
+                if str(e.start.tzinfo) in timezones:
+                    start_tz = timezones[str(e.start.tzinfo)]
+                else:
+                    start_tz = e.start.tzinfo
 
-                if e.end.tzinfo != UTC:
-                    if str(e.end.tzinfo) in timezones:
-                        end_tz = timezones[str(e.end.tzinfo)]
-                    else:
-                        try:
-                            end_tz = timezone(str(e.end.tzinfo))
-                        except:
-                            pass
+            if e.end.tzinfo != UTC:
+                if str(e.end.tzinfo) in timezones:
+                    end_tz = timezones[str(e.end.tzinfo)]
+                else:
+                    end_tz = e.end.tzinfo
 
             # If we've been passed or constructed start/end values
             # that are timezone naive, but the actual appointment
@@ -366,8 +390,8 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
             if e.recurring:
                 # Unfold recurring events according to their rrule
                 rule = parse_rrule(component, cal_tz)
-                dur = e.end - e.start
-                after = start - dur
+                [after] = adjust_timezone(component, [start - duration], start_tz)
+                [end] = adjust_timezone(component, [end], start_tz)
 
                 for dt in rule.between(after, end, inc=True):
                     if start_tz is None:
@@ -380,7 +404,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                         naive = datetime(
                             dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second
                         )
-                        dtstart = start_tz.localize(naive)
+                        dtstart = normalize(naive, tz=start_tz)
 
                         ecopy = e.copy_to(dtstart, e.uid)
 
@@ -402,7 +426,13 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 exdate = "%04d%02d%02d" % (e.start.year, e.start.month, e.start.day)
                 if exdate not in exceptions:
                     found.append(e)
-    return found
+    # Filter out all events that are moved as indicated by the recurrence-id prop
+    return [
+        event
+        for event in found
+        if e.sequence is None
+        or not (event.uid, event.start, e.sequence) in recurrence_ids
+    ]
 
 
 def parse_rrule(component, tz=UTC):
@@ -425,6 +455,14 @@ def parse_rrule(component, tz=UTC):
         rdtstart = component["dtstart"].dt
         if type(rdtstart) is datetime:
             rdtstart = normalize(rdtstart, tz=tz)
+
+        # Remove/add timezone to rrule until dates depending on component
+        if type(rdtstart) is date:
+            for index, rru in enumerate(rrules):
+                if "UNTIL" in rru:
+                    rrules[index]["UNTIL"] = adjust_timezone(
+                        component, rru["UNTIL"], tz
+                    )
 
         # Parse the rrules, might return a rruleset instance, instead of rrule
         rule = rrulestr(
@@ -469,4 +507,4 @@ def extract_exdates(component):
         elif isinstance(exd_prop, vDDDLists):
             dates.extend(normalize(exd.dt) for exd in exd_prop.dts)
 
-    return dates
+    return adjust_timezone(component, dates)
