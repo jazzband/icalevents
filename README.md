@@ -33,3 +33,13 @@ from icalevents.icalevents import events
 
 es  = events(<Google Calendar URL>)
 ```
+
+# Contributing
+
+You will need [poetry](https://github.com/python-poetry/poetry) and [pre-commit](https://pre-commit.com/index.html) installed and than run.
+
+```bash
+pre-commit install
+```
+
+Happy contributing!

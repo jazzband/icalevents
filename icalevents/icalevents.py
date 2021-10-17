@@ -44,8 +44,7 @@ def events(
         content = ical_download.data_from_file(file, apple_fix=fix_apple)
 
     if not content and string_content:
-        content = ical_download.data_from_string(
-            string_content, apple_fix=fix_apple)
+        content = ical_download.data_from_string(string_content, apple_fix=fix_apple)
 
     found_events += parse_events(content, start=start, end=end)
 
@@ -67,15 +66,22 @@ def request_data(key, url, file, string_content, start, end, fix_apple):
     data = []
 
     try:
-        data += events(url=url, file=file, string_content=string_content,
-                       start=start, end=end, fix_apple=fix_apple)
+        data += events(
+            url=url,
+            file=file,
+            string_content=string_content,
+            start=start,
+            end=end,
+            fix_apple=fix_apple,
+        )
     finally:
         update_events(key, data)
         request_finished(key)
 
 
-def events_async(key, url=None, file=None, start=None, string_content=None,
-                 end=None, fix_apple=False):
+def events_async(
+    key, url=None, file=None, start=None, string_content=None, end=None, fix_apple=False
+):
     """
     Trigger an asynchronous data request.
 
@@ -87,7 +93,10 @@ def events_async(key, url=None, file=None, start=None, string_content=None,
     :param end: end date
     :param fix_apple: fix known Apple iCal issues
     """
-    t = Thread(target=request_data, args=(key, url, file, string_content, start, end, fix_apple))
+    t = Thread(
+        target=request_data,
+        args=(key, url, file, string_content, start, end, fix_apple),
+    )
 
     with event_lock:
         if key not in threads:

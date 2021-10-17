@@ -16,7 +16,7 @@ iCloud:
 -------
 
 .. code:: python
-  
+
   from icalevents.icalevents import events
 
   es  = events(<iCloud URL>, fix_apple=True)

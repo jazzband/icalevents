@@ -1,7 +1,0 @@
-httplib2
-icalendar
-python-dateutil >= 2.7.0
-pytz
-datetime
-coverage
-codecov
