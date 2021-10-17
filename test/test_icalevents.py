@@ -429,10 +429,26 @@ class ICalEventsTests(unittest.TestCase):
 
         [e1] = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(e1.attendee[0].params["PARTSTAT"], "DECLINED", "add paarams")
-
+        self.assertEqual(e1.attendee.params["PARTSTAT"], "DECLINED", "add paarams")
         self.assertEqual(
-            e1.attendee[0], "mailto:calendar@gmail.com", "still is like a string"
+            e1.attendee, "mailto:calendar@gmail.com", "still is like a string"
+        )
+
+    def test_attenddees_can_be_multiple(self):
+        ical = "test/test_data/multi_attendee_response.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(e1.attendee[0].params["PARTSTAT"], "DECLINED", "add paarams")
+        self.assertEqual(
+            e1.attendee[0], "mailto:calendar@gmail.com", "we have a list of attendees"
+        )
+        self.assertEqual(
+            e1.attendee[1],
+            "mailto:calendar@microsoft.com",
+            "we have more than one attendee",
         )
 
     def test_floating(self):

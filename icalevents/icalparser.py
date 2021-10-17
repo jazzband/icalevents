@@ -29,11 +29,8 @@ class Attendee(str):
     def __init__(self, address):
         self.address = address
 
-    def __str__(self):
-        return self.address.encode("utf-8").decode("ascii")
-
     def __repr__(self):
-        return self.__str__()
+        return self.address.encode("utf-8").decode("ascii")
 
     @property
     def params(self):
@@ -206,7 +203,7 @@ def create_event(component, utc_default, tz=UTC):
         if type(event.attendee) is list:
             event.attendee = [Attendee(attendee) for attendee in event.attendee]
         else:
-            event.attendee = [Attendee(event.attendee)]
+            event.attendee = Attendee(event.attendee)
 
     else:
         event.attendee = str(None)
