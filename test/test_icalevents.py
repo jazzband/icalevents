@@ -429,4 +429,6 @@ class ICalEventsTests(unittest.TestCase):
 
         [e1] = icalevents.events(file=ical, start=start, end=end)
         expect = datetime(2021, 10, 24, 9, 0, 0, tzinfo=gettz("Australia/Sydney"))
-        self.assertEqual(e1.start, expect, "Recurring event matches event in ical (Issue #89)")
+        self.assertEqual(
+            e1.start, expect, "Recurring event matches event in ical (Issue #89)"
+        )
