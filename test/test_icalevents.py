@@ -421,3 +421,12 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertEqual(e1.transparent, True, "respect transparency")
         self.assertEqual(e2.transparent, False, "respect opaqueness")
+
+    def test_recurrence_tz(self):
+        ical = "test/test_data/recurrence_tz.ics"
+        start = datetime(2021, 10, 24, 00, 0, 0, tzinfo=gettz("Australia/Sydney"))
+        end = datetime(2021, 10, 26, 00, 0, 0, tzinfo=gettz("Australia/Sydney"))
+
+        [e1] = icalevents.events(file=ical, start=start, end=end)
+        expect = datetime(2021, 10, 24, 9, 0, 0, tzinfo=gettz("Australia/Sydney"))
+        self.assertEqual(e1.start, expect, "Recurring event matches event in ical (Issue #89)")
