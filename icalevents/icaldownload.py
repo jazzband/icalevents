@@ -82,7 +82,7 @@ class ICalDownload:
             content = f.read()
 
         if not content:
-            raise IOError("File %f is not readable or is empty!" % file)
+            raise IOError("File %s is not readable or is empty!" % file)
 
         return self.decode(content, apple_fix=apple_fix)
 
