@@ -93,3 +93,14 @@ DTSTART:19180331T020000
             # Delete tmp dir
             os.chdir("..")
             shutil.rmtree("tmp")
+
+    def test_empty_file(self):
+        empty_ical = "test/test_data/empty.ics"
+
+        with self.assertRaises(IOError) as cm:
+            icalevents.icaldownload.ICalDownload().data_from_file(empty_ical)
+
+        self.assertEqual(
+            str(cm.exception),
+            "File test/test_data/empty.ics is not readable or is empty!"
+        )
