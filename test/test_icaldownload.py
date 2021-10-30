@@ -102,5 +102,5 @@ DTSTART:19180331T020000
 
         self.assertEqual(
             str(cm.exception),
-            "File test/test_data/empty.ics is not readable or is empty!"
+            "File test/test_data/empty.ics is not readable or is empty!",
         )
