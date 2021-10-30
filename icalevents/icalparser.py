@@ -143,6 +143,7 @@ class Event:
         ne.created = self.created
         ne.last_modified = self.last_modified
         ne.categories = self.categories
+        ne.status = self.status
         ne.url = self.url
 
         return ne
@@ -231,10 +232,10 @@ def create_event(component, tz=UTC):
         event.categories = encoded_categories
 
     if component.get("status"):
-        event.status = component.get("status")
+        event.status = encode(component.get("status"))
 
     if component.get("url"):
-        event.url = component.get("url")
+        event.url = encode(component.get("url"))
 
     return event
 
