@@ -457,12 +457,9 @@ def parse_rrule(component, tz=UTC):
             rdtstart = normalize(rdtstart, tz=tz)
 
         # Remove/add timezone to rrule until dates depending on component
-        if type(rdtstart) is date:
-            for index, rru in enumerate(rrules):
-                if "UNTIL" in rru:
-                    rrules[index]["UNTIL"] = adjust_timezone(
-                        component, rru["UNTIL"], tz
-                    )
+        for index, rru in enumerate(rrules):
+            if "UNTIL" in rru:
+                rrules[index]["UNTIL"] = adjust_timezone(component, rru["UNTIL"], tz)
 
         # Parse the rrules, might return a rruleset instance, instead of rrule
         rule = rrulestr(
