@@ -387,9 +387,15 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 end = normalize(end, e.start.tzinfo)
 
             duration = e.end - e.start
+
+            event_start = component.get("dtstart").dt
+            rule_start_time_zone = cal_tz
+            if type(event_start) is datetime and event_start.tzinfo:
+                rule_start_time_zone = component.get("dtstart").dt.tzinfo
+
             if e.recurring:
                 # Unfold recurring events according to their rrule
-                rule = parse_rrule(component, cal_tz)
+                rule = parse_rrule(component, rule_start_time_zone)
                 [after] = adjust_timezone(component, [start - duration], start_tz)
                 [end] = adjust_timezone(component, [end], start_tz)
 
