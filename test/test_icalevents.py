@@ -436,3 +436,17 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertEqual(e1.transparent, True, "respect transparency")
         self.assertEqual(e2.transparent, False, "respect opaqueness")
+
+    def test_status_and_url(self):
+        ical = "test/test_data/status_and_url.ics"
+        start = date(2018, 10, 30)
+        end = date(2018, 10, 31)
+
+        [ev1, ev2, ev3, ev4, ev5] = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(ev1.status, "TENTATIVE")
+        self.assertEqual(ev1.url, None)
+        self.assertEqual(ev2.status, "CONFIRMED")
+        self.assertEqual(ev2.url, "https://example.com/")
+        self.assertEqual(ev3.status, "CANCELLED")
+        self.assertEqual(ev4.status, "CANCELLED")
+        self.assertEqual(ev5.status, None)
