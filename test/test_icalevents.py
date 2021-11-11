@@ -520,3 +520,74 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(
             e1.start, expect, "Recurring event matches event in ical (Issue #89)"
         )
+
+    def test_attenddees_have_params(self):
+        ical = "test/test_data/response.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(e1.attendee.params["PARTSTAT"], "DECLINED", "add paarams")
+        self.assertEqual(
+            e1.attendee, "mailto:calendar@gmail.com", "still is like a string"
+        )
+
+    def test_attenddees_can_be_multiple(self):
+        ical = "test/test_data/multi_attendee_response.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(e1.attendee[0].params["PARTSTAT"], "DECLINED", "add paarams")
+        self.assertEqual(
+            e1.attendee[0], "mailto:calendar@gmail.com", "we have a list of attendees"
+        )
+        self.assertEqual(
+            e1.attendee[1],
+            "mailto:calendar@microsoft.com",
+            "we have more than one attendee",
+        )
+
+    def test_floating(self):
+        ical = "test/test_data/floating.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1, e2] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(e1.transparent, True, "respect transparency")
+        self.assertEqual(e1.start.hour, 0, "check start of the day")
+        self.assertEqual(e1.end.hour, 0, "check end of the day")
+        self.assertEqual(e1.floating, True, "respect floating time")
+        self.assertEqual(e1.start.tzinfo, UTC, "check tz as default utc")
+
+        self.assertEqual(e2.transparent, False, "respect transparency")
+        self.assertEqual(e2.start.hour, 6, "check start of the day")
+        self.assertEqual(e2.end.hour, 14, "check end of the day")
+        self.assertEqual(e2.floating, False, "respect floating time")
+        self.assertEqual(e2.start.tzinfo, UTC, "check tz as default utc")
+
+    def test_non_floating(self):
+        ical = "test/test_data/non_floating.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1, e2] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(e1.transparent, True, "respect transparency")
+        self.assertEqual(e1.start.hour, 0, "check start of the day")
+        self.assertEqual(e1.end.hour, 0, "check end of the day")
+        self.assertEqual(e1.floating, False, "respect floating time")
+        self.assertEqual(
+            e1.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
+        )
+
+        self.assertEqual(e2.transparent, False, "respect transparency")
+        self.assertEqual(e2.start.hour, 8, "check start of the day")
+        self.assertEqual(e2.end.hour, 16, "check end of the day")
+        self.assertEqual(e2.floating, False, "respect floating time")
+        self.assertEqual(
+            e1.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
+        )

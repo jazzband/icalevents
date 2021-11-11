@@ -26,6 +26,18 @@ def now():
     return datetime.now(UTC)
 
 
+class Attendee(str):
+    def __init__(self, address):
+        self.address = address
+
+    def __repr__(self):
+        return self.address.encode("utf-8").decode("ascii")
+
+    @property
+    def params(self):
+        return self.address.params
+
+
 class Event:
     """
     Represents one event (occurrence in case of reoccurring events).
@@ -52,6 +64,7 @@ class Event:
         self.attendee = None
         self.organizer = None
         self.categories = None
+        self.floating = None
         self.status = None
         self.url = None
 
@@ -145,6 +158,7 @@ class Event:
         ne.created = self.created
         ne.last_modified = self.last_modified
         ne.categories = self.categories
+        ne.floating = self.floating
         ne.status = self.status
         ne.url = self.url
 
@@ -160,7 +174,7 @@ def encode(value: Optional[vText]) -> Optional[str]:
         return str(value.encode("utf-8"))
 
 
-def create_event(component, tz=UTC):
+def create_event(component, utc_default, tz=UTC):
     """
     Create an event from its iCal representation.
 
@@ -172,6 +186,9 @@ def create_event(component, tz=UTC):
     event = Event()
 
     event.start = normalize(component.get("dtstart").dt, tz=tz)
+    # The RFC specifies that the TZID parameter must be specified for datetime or time
+    # Otherwise we set a default timezone (if only one is set with VTIMEZONE) or utc
+    event.floating = type(component.get("dtstart").dt) == date and utc_default
 
     if component.get("dtend"):
         event.end = normalize(component.get("dtend").dt, tz=tz)
@@ -190,12 +207,9 @@ def create_event(component, tz=UTC):
     if component.get("attendee"):
         event.attendee = component.get("attendee")
         if type(event.attendee) is list:
-            temp = []
-            for a in event.attendee:
-                temp.append(a.encode("utf-8").decode("ascii"))
-            event.attendee = temp
+            event.attendee = [Attendee(attendee) for attendee in event.attendee]
         else:
-            event.attendee = event.attendee.encode("utf-8").decode("ascii")
+            event.attendee = Attendee(event.attendee)
     else:
         event.attendee = str(None)
 
@@ -213,7 +227,7 @@ def create_event(component, tz=UTC):
         event_class = component.get("class")
         event.private = event_class == "PRIVATE" or event_class == "CONFIDENTIAL"
 
-    if component.get("class"):
+    if component.get("transp"):
         event.transparent = component.get("transp") == "TRANSPARENT"
 
     if component.get("created"):
@@ -340,9 +354,11 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
 
     # If there's exactly one timezone in the file,
     # assume it applies globally, otherwise UTC
+    utc_default = False
     if len(timezones) == 1:
         cal_tz = get_timezone(list(timezones)[0])
     else:
+        utc_default = True
         cal_tz = UTC
 
     start = normalize(start, cal_tz)
@@ -354,7 +370,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
         exceptions = {}
 
         if component.name == "VEVENT":
-            e = create_event(component, cal_tz)
+            e = create_event(component, utc_default, cal_tz)
 
             if "EXDATE" in component:
                 # Deal with the fact that sometimes it's a list and
