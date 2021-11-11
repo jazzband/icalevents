@@ -407,7 +407,7 @@ class ICalEventsTests(unittest.TestCase):
 
         evs = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(len(evs), 41, "41 events in total - one was moved")
+        self.assertEqual(len(evs), 42, "42 events in total - one was moved")
 
     def test_recurence_id_google(self):
         ical = "test/test_data/recurrenceid_google.ics"
@@ -420,12 +420,71 @@ class ICalEventsTests(unittest.TestCase):
 
     def test_cest(self):
         ical = "test/test_data/cest.ics"
-        start = date(2021, 1, 1)
-        end = date(2021, 12, 31)
+        start = date(2010, 1, 1)
+        end = date(2023, 12, 31)
 
         evs = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(len(evs), 115, "4 events in total")
+        self.assertEqual(
+            len(evs), 239, "239 events in total"
+        )  # 102 events / 91 + 11 recurring
+
+    def test_cest_2021_03(self):
+        ical = "test/test_data/cest.ics"
+        start = date(2021, 3, 1)
+        end = date(2021, 3, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(len(evs), 30, "30 in march")
+
+    def test_cest_2021_04(self):
+        ical = "test/test_data/cest.ics"
+        start = date(2021, 4, 1)
+        end = date(2021, 5, 1)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(len(evs), 27, "27 in april")
+
+    def test_cest_2021_05(self):
+        ical = "test/test_data/cest.ics"
+        start = date(2021, 5, 1)
+        end = date(2021, 6, 1)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(len(evs), 20, "20 in mai")
+
+    def test_cest_1(self):
+        ical = "test/test_data/cest_every_day_for_one_year.ics"
+        start = date(2020, 1, 1)
+        end = date(2024, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(
+            len(evs),
+            366,
+            "366 events in total - one year + 1 (2021-11-11 to 2022-11-11)",
+        )
+
+    def test_cest_2(self):
+        ical = "test/test_data/cest_every_second_day_for_one_year.ics"
+        start = date(2020, 1, 1)
+        end = date(2024, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(
+            len(evs), 183, "183 events in total - one year (2021-11-11 to 2022-11-11)"
+        )
+
+    def test_cest_3(self):
+        ical = "test/test_data/cest_with_deleted.ics"
+        start = date(2020, 1, 1)
+        end = date(2024, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(
+            len(evs), 3, "3 events in total - 5 events in rrule but 2 deleted"
+        )
 
     def test_transparent(self):
         ical = "test/test_data/transparent.ics"
@@ -450,3 +509,14 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(ev3.status, "CANCELLED")
         self.assertEqual(ev4.status, "CANCELLED")
         self.assertEqual(ev5.status, None)
+
+    def test_recurrence_tz(self):
+        ical = "test/test_data/recurrence_tz.ics"
+        start = datetime(2021, 10, 24, 00, 0, 0, tzinfo=gettz("Australia/Sydney"))
+        end = datetime(2021, 10, 26, 00, 0, 0, tzinfo=gettz("Australia/Sydney"))
+
+        [e1] = icalevents.events(file=ical, start=start, end=end)
+        expect = datetime(2021, 10, 24, 9, 0, 0, tzinfo=gettz("Australia/Sydney"))
+        self.assertEqual(
+            e1.start, expect, "Recurring event matches event in ical (Issue #89)"
+        )
