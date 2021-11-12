@@ -449,6 +449,21 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
             elif e.end >= start and e.start <= end:
                 exdate = "%04d%02d%02d" % (e.start.year, e.start.month, e.start.day)
                 if exdate not in exceptions:
+                    if (
+                        type(e.recurrence_id) == datetime
+                        and type(component.get("dtstart").dt) == datetime
+                    ):
+                        naive = datetime(
+                            e.recurrence_id.year,
+                            e.recurrence_id.month,
+                            e.recurrence_id.day,
+                            e.recurrence_id.hour,
+                            e.recurrence_id.minute,
+                            e.recurrence_id.second,
+                        )
+                        e.recurrence_id = normalize(
+                            naive, tz=component.get("dtstart").dt.tzinfo
+                        )
                     found.append(e)
 
     result = found.copy()

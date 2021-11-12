@@ -591,3 +591,19 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(
             e1.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
         )
+
+    def test_recurring_override(self):
+        ical = "test/test_data/recurring_override.ics"
+        start = date(2021, 11, 23)
+        end = date(2021, 11, 24)
+
+        [e0, e1, e2] = icalevents.events(file=ical, start=start, end=end)
+
+        # Here all dates are in utc because the .ics has two timezones and this causes a transformation
+        self.assertEqual(e0.start, datetime(2021, 11, 23, 9, 0, tzinfo=UTC))
+        self.assertEqual(e1.start, datetime(2021, 11, 23, 10, 45, tzinfo=UTC))
+        self.assertEqual(
+            e2.start,
+            datetime(2021, 11, 23, 13, 0, tzinfo=UTC),
+            "moved 1 hour from 12:00 to 13:00",
+        )
