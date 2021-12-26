@@ -20,6 +20,9 @@ def events(
     end=None,
     fix_apple=False,
     http=None,
+    tzinfo=None,
+    sort=None,
+    strict=False
 ):
     """
     Get all events form the given iCal URL occurring in the given time range.
@@ -30,6 +33,9 @@ def events(
     :param start: start date (see dateutils.date)
     :param end: end date (see dateutils.date)
     :param fix_apple: fix known Apple iCal issues
+    :param tzinfo: return values in specified tz
+    :param sort: sort return values
+    :param strict: return dates, datetimes and datetime with timezones as specified in ical
     :return: events as list of dictionaries
     """
     found_events = []
@@ -46,7 +52,7 @@ def events(
     if not content and string_content:
         content = ical_download.data_from_string(string_content, apple_fix=fix_apple)
 
-    found_events += parse_events(content, start=start, end=end)
+    found_events += parse_events(content, start=start, end=end, tzinfo=tzinfo, sort=sort, strict=strict)
 
     return found_events
 

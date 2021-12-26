@@ -2,20 +2,20 @@
 Parse iCal data to Events.
 """
 # for UID generation
+from faulthandler import is_enabled
 from random import randint
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, tzinfo
 from typing import Optional
 
-from dateutil.relativedelta import relativedelta
-from dateutil.rrule import rrule, rruleset, rrulestr
+from dateutil.rrule import rrulestr
 from dateutil.tz import UTC, gettz
 
 from icalendar import Calendar
-from icalendar.windows_to_olson import WINDOWS_TO_OLSON
 from icalendar.prop import vDDDLists, vText
-from pytz import timezone
 from uuid import uuid4
 
+from icalendar.windows_to_olson import WINDOWS_TO_OLSON
+from pytz import timezone
 
 def now():
     """
@@ -89,41 +89,33 @@ class Event:
                 "Only events can be compared with each other! Other is %s" % type(other)
             )
         else:
-            return self.start < other.start
+            # start and end can be dates, datetimes and datetimes with timezoneinfo
+            if type(self.start) is date and type(other.start) is date:
+                return self.start < other.start
+            elif type(self.start) is datetime and type(other.start) is datetime:
+                if self.start.tzinfo == other.start.tzinfo:
+                    return self.start < other.start
+                else:
+                    return self.start.astimezone(UTC) < other.start.astimezone(UTC)
+            elif type(self.start) is date and type(other.start) is datetime:
+                return self.start < other.start.date()
+            elif type(self.start) is datetime and type(other.start) is date:
+                return self.start.date() < other.start
+
 
     def __str__(self):
-        n = now()
+        return "%s: %s (%s)" % (self.start, self.summary, self.end - self.start)
 
-        if not self.start.tzinfo:
-            self.start = normalize(self.start)
-        if not self.end.tzinfo:
-            self.end = normalize(self.end)
-
-        # compute time delta description
-        if not self.all_day:
-            if self.end > n > self.start:
-                # event is now
-                delta = "now"
-            elif self.start > n:
-                # event is a future event
-                if self.time_left().days > 0:
-                    delta = "%s days left" % self.time_left().days
-                else:
-                    hours = self.time_left().seconds / (60 * 60)
-                    delta = "%.1f hours left" % hours
-            else:
-                # event is over
-                delta = "ended"
-        else:
-            if self.end > n > self.start:
-                delta = "today"
-            elif self.start > n:
-                delta = "%s days left" % self.time_left().days
-            else:
-                delta = "ended"
-
-        return "%s: %s (%s)" % (self.start, self.summary, delta)
-
+    def astimezone(self, tzinfo):
+        
+        if type(self.start) is datetime:
+            self.start = self.start.astimezone(tzinfo)
+            
+        if type(self.end) is datetime:
+            self.end = self.end.astimezone(tzinfo)
+        
+        return self
+    
     def copy_to(self, new_start=None, uid=None):
         """
         Create a new event equal to this with new start date.
@@ -174,24 +166,23 @@ def encode(value: Optional[vText]) -> Optional[str]:
         return str(value.encode("utf-8"))
 
 
-def create_event(component, utc_default, tz=UTC):
+def create_event(component, utc_default):
     """
     Create an event from its iCal representation.
 
     :param component: iCal component
-    :param tz: timezone for start and end times
     :return: event
     """
 
     event = Event()
 
-    event.start = normalize(component.get("dtstart").dt, tz=tz)
+    event.start = component.get("dtstart").dt
     # The RFC specifies that the TZID parameter must be specified for datetime or time
     # Otherwise we set a default timezone (if only one is set with VTIMEZONE) or utc
     event.floating = type(component.get("dtstart").dt) == date and utc_default
 
     if component.get("dtend"):
-        event.end = normalize(component.get("dtend").dt, tz=tz)
+        event.end = component.get("dtend").dt
     elif component.get("duration"):  # compute implicit end as start + duration
         event.end = event.start + component.get("duration").dt
     else:  # compute implicit end as start + 0
@@ -231,13 +222,19 @@ def create_event(component, utc_default, tz=UTC):
         event.transparent = component.get("transp") == "TRANSPARENT"
 
     if component.get("created"):
-        event.created = normalize(component.get("created").dt, tz)
+        event.created = component.get("created").dt
 
     if component.get("RECURRENCE-ID"):
-        event.recurrence_id = normalize(component.get("RECURRENCE-ID").dt, tz)
+        rid = component.get("RECURRENCE-ID").dt
+        
+        # Spec defines that if DTSTART is a date RECURRENCE-ID also is to be interpreted as a date
+        if type(component.get("dtstart").dt) is date:
+            event.recurrence_id = date(year=rid.year, month=rid.month, day=rid.day)
+        else:
+            event.recurrence_id = rid
 
     if component.get("last-modified"):
-        event.last_modified = normalize(component.get("last-modified").dt, tz)
+        event.last_modified = component.get("last-modified").dt
     elif event.created:
         event.last_modified = event.created
 
@@ -261,58 +258,7 @@ def create_event(component, utc_default, tz=UTC):
     return event
 
 
-def normalize(dt, tz=UTC):
-    """
-    Convert date or datetime to datetime with timezone.
-
-    :param dt: date to normalize
-    :param tz: the normalized date's timezone
-    :return: date as datetime with timezone
-    """
-    if type(dt) is date:
-        dt = dt + relativedelta(hour=0)
-    elif type(dt) is datetime:
-        pass
-    else:
-        raise ValueError("unknown type %s" % type(dt))
-
-    if dt.tzinfo:
-        dt = dt.astimezone(tz)
-    else:
-        dt = dt.replace(tzinfo=tz)
-
-    return dt
-
-
-def get_timezone(tz_name):
-    if tz_name in WINDOWS_TO_OLSON:
-        return gettz(WINDOWS_TO_OLSON[tz_name])
-    else:
-        return gettz(tz_name)
-
-
-def adjust_timezone(component, dates, tz=None):
-    # Remove timezone if none is present in component
-    if (
-        isinstance(component["dtstart"].dt, date)
-        or component["dtstart"].dt.tzinfo is None
-    ):
-        dates = [
-            date.replace(tzinfo=None) if type(date) is datetime else date
-            for date in dates
-        ]
-
-    # Add timezone if one is present in component
-    if (
-        isinstance(component["dtstart"].dt, datetime)
-        and not component["dtstart"].dt.tzinfo is None
-    ):
-        dates = [normalize(date) for date in dates]
-
-    return dates
-
-
-def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
+def parse_events(content, start=None, end=None, default_span=timedelta(days=7), tzinfo=None, sort=False, strict=False):
     """
     Query the events occurring in a given time range.
 
@@ -332,7 +278,13 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
         raise ValueError("Content is invalid!")
 
     calendar = Calendar.from_ical(content)
-
+    
+    
+    # > Will be deprecated ========================
+    # Calendar.from_ical already parses timezones as specified in the ical.
+    # We can specify a 'default' tz but this is not according to spec.
+    # Kept this here to verify tests and backward compatibility
+    
     # Keep track of the timezones defined in the calendar
     timezones = {}
 
@@ -360,183 +312,179 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     else:
         utc_default = True
         cal_tz = UTC
-
-    start = normalize(start, cal_tz)
-    end = normalize(end, cal_tz)
-
+    # < ==========================================
+    
     found = []
-    for component in calendar.walk():
-        # Skip dates that are stored as exceptions.
+    
+    def add_if_not_exception(event):
+        exdate = "%04d%02d%02d" % (
+            event.start.year,
+            event.start.month,
+            event.start.day,
+        )
+
+        if exdate not in exceptions:
+            found.append(event)
+            
+    for component in calendar.walk():  
         exceptions = {}
-
+        
+        if "EXDATE" in component:
+            # Deal with the fact that sometimes it's a list and
+            # sometimes it's a singleton
+            exlist = []
+            if isinstance(component["EXDATE"], list):
+                exlist = component["EXDATE"]
+            else:
+                exlist.append(component["EXDATE"])
+            for ex in exlist:
+                exdate = ex.to_ical().decode("UTF-8")
+                exceptions[exdate[0:8]] = exdate
+    
         if component.name == "VEVENT":
-            e = create_event(component, utc_default, cal_tz)
-
-            if "EXDATE" in component:
-                # Deal with the fact that sometimes it's a list and
-                # sometimes it's a singleton
-                exlist = []
-                if isinstance(component["EXDATE"], list):
-                    exlist = component["EXDATE"]
-                else:
-                    exlist.append(component["EXDATE"])
-                for ex in exlist:
-                    exdate = ex.to_ical().decode("UTF-8")
-                    exceptions[exdate[0:8]] = exdate
-
-            # Attempt to work out what timezone is used for the start
-            # and end times. If the timezone is defined in the calendar,
-            # use it; otherwise, attempt to load the rules from pytz.
-            start_tz = None
-
-            if e.start.tzinfo != UTC:
-                if str(e.start.tzinfo) in timezones:
-                    start_tz = timezones[str(e.start.tzinfo)]
-                else:
-                    start_tz = e.start.tzinfo
-
-            # If we've been passed or constructed start/end values
-            # that are timezone naive, but the actual appointment
-            # start and end times are in a timezone, convert start
-            # and end to have a timezone. Otherwise, python will
-            # raise an exception for comparing timezone naive
-            # and offset-aware values.
-            if e.start.tzinfo and not start.tzinfo:
-                start = normalize(start, e.start.tzinfo)
-            if e.start.tzinfo and not end.tzinfo:
-                end = normalize(end, e.start.tzinfo)
-
-            duration = e.end - e.start
-
-            event_start = component.get("dtstart").dt
-            rule_start_time_zone = cal_tz
-            if type(event_start) is datetime and event_start.tzinfo:
-                rule_start_time_zone = component.get("dtstart").dt.tzinfo
+            e = create_event(component, utc_default)
+            
+            # make rule.between happy and provide from, to points in time that have the same format as dtstart
+            s = component['dtstart'].dt
+            if type(s) is date and not e.recurring:
+                f, t = date(start.year, start.month, start.day), date(end.year, end.month, end.day)
+            elif type(s) is datetime and s.tzinfo:
+                f, t = datetime(start.year, start.month, start.day, tzinfo=s.tzinfo), datetime(end.year, end.month, end.day, tzinfo=s.tzinfo)
+            else:
+                f, t = datetime(start.year, start.month, start.day), datetime(end.year, end.month, end.day)
+                
             if e.recurring:
-                # Unfold recurring events according to their rrule
-                rule = parse_rrule(component, rule_start_time_zone)
-                [after] = adjust_timezone(component, [start], start_tz)
-                [end] = adjust_timezone(component, [end], start_tz)
-                for dt in rule.between(after, end, inc=True):
-                    if start_tz is None:
-                        # Shrug. If we couldn't work out the timezone, it is what it is.
-                        ecopy = e.copy_to(dt, e.uid)
+                rule = parse_rrule(component)
+                for dt in rule.between(f, t, inc=True):
+                    # Recompute the start time in the current timezone *on* the
+                    # date of *this* occurrence. This handles the case where the
+                    # recurrence has crossed over the daylight savings time boundary.
+                    if type(dt) is datetime and dt.tzinfo:
+                        dtstart = dt.replace(tzinfo=get_timezone(str(dt.tzinfo)))
+                        ecopy = e.copy_to(dtstart.date() if type(s) is date else dtstart, e.uid)
                     else:
-                        # Recompute the start time in the current timezone *on* the
-                        # date of *this* occurrence. This handles the case where the
-                        # recurrence has crossed over the daylight savings time boundary.
-                        naive = datetime(
-                            dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second
-                        )
-                        dtstart = normalize(naive, tz=start_tz)
-                        ecopy = e.copy_to(dtstart, e.uid)
-
-                        # We're effectively looping over the start time, we might need
-                        # to adjust the end time too, but don't have it's recurred value.
-                        # Make sure it's adjusted by constructing it from the meeting
-                        # duration. Pro: it'll be right. Con: if it was in a different
-                        # timezone from the start time, we'll have lost that.
-                        ecopy.end = dtstart + duration
-
-                    exdate = "%04d%02d%02d" % (
-                        ecopy.start.year,
-                        ecopy.start.month,
-                        ecopy.start.day,
-                    )
-
-                    if exdate not in exceptions:
-                        found.append(ecopy)
-            elif e.end >= start and e.start <= end:
-                exdate = "%04d%02d%02d" % (e.start.year, e.start.month, e.start.day)
-                if exdate not in exceptions:
-                    if (
-                        type(e.recurrence_id) == datetime
-                        and type(component.get("dtstart").dt) == datetime
-                    ):
-                        naive = datetime(
-                            e.recurrence_id.year,
-                            e.recurrence_id.month,
-                            e.recurrence_id.day,
-                            e.recurrence_id.hour,
-                            e.recurrence_id.minute,
-                            e.recurrence_id.second,
-                        )
-                        e.recurrence_id = normalize(
-                            naive, tz=component.get("dtstart").dt.tzinfo
-                        )
-                    found.append(e)
+                        ecopy = e.copy_to(dt.date() if type(s) is date else dt, e.uid)
+                    add_if_not_exception(ecopy)
+                    
+            elif e.end >= f and e.start <= t:
+                add_if_not_exception(e)
+            
+                
 
     result = found.copy()
-
+    
+    # Remove events that are replaced in ical
     for event in found:
         if not event.recurrence_id and (event.uid, event.start) in [
             (f.uid, f.recurrence_id) for f in found
         ]:
             result.remove(event)
 
+    # > Will be deprecated ========================
+    # We will apply default cal_tz as required by some tests.
+    # This is just here for backward-compatibility
+    if not strict:
+        for event in result:
+            if type(event.start) is date:
+                event.start = datetime(year=event.start.year, month=event.start.month, day=event.start.day, hour=0, minute=0, tzinfo=cal_tz)
+                event.end = datetime(year=event.end.year, month=event.end.month, day=event.end.day, hour=0, minute=0, tzinfo=cal_tz)
+            elif type(event.start) is datetime:
+                if event.start.tzinfo:
+                    event.start = event.start.astimezone(cal_tz)
+                    event.end = event.end.astimezone(cal_tz)
+                else:
+                    event.start = event.start.replace(tzinfo=cal_tz)
+                    event.end = event.end.replace(tzinfo=cal_tz)
+            
+            if event.created:         
+                if type(event.created) is date:
+                    event.created = datetime(year=event.created.year, month=event.created.month, day=event.created.day, hour=0, minute=0, tzinfo=cal_tz)
+                if type(event.created) is datetime:
+                    if event.created.tzinfo:
+                        event.created = event.created.astimezone(cal_tz)
+                    else:
+                        event.created = event.created.replace(tzinfo=cal_tz)
+                        
+            if event.last_modified:         
+                if type(event.last_modified) is date:
+                    event.last_modified = datetime(year=event.last_modified.year, month=event.last_modified.month, day=event.last_modified.day, hour=0, minute=0, tzinfo=cal_tz)
+                if type(event.last_modified) is datetime:
+                    if event.last_modified.tzinfo:
+                        event.last_modified = event.last_modified.astimezone(cal_tz)
+                    else:
+                        event.last_modified = event.last_modified.replace(tzinfo=cal_tz)
+    # < ==========================================
+
+    if sort:
+        result.sort()
+    
+    if tzinfo:
+        result = [event.astimezone(tzinfo) for event in result]
+        
+
+    
     return result
 
 
-def parse_rrule(component, tz=UTC):
+def parse_rrule(component):
     """
     Extract a dateutil.rrule object from an icalendar component. Also includes
     the component's dtstart and exdate properties. The rdate and exrule
     properties are not yet supported.
 
     :param component: icalendar component
-    :param tz: timezone for DST handling
-    :return: extracted rrule or rruleset
+    :return: extracted rrule or rruleset or None
     """
-    if component.get("rrule"):
-        # component['rrule'] can be both a scalar and a list
-        rrules = component["rrule"]
-        if not isinstance(rrules, list):
-            rrules = [rrules]
-
-        # If dtstart is a datetime, make sure it's in a timezone.
-        rdtstart = component["dtstart"].dt
-        if type(rdtstart) is datetime:
-            rdtstart = normalize(rdtstart, tz=tz)
-
-        # Remove/add timezone to rrule until dates depending on component
-        for index, rru in enumerate(rrules):
-            if "UNTIL" in rru:
-                if type(rdtstart) is date:
-                    rrules[index]["UNTIL"] = [
-                        normalize(until, tz).date() for until in rrules[index]["UNTIL"]
-                    ]
-                else:
-                    # Handle summer/winter time
-                    rrules[index]["UNTIL"] = [
-                        normalize(until, UTC)
-                        + tz.utcoffset(component["dtstart"].dt, is_dst=True)
-                        for until in rrules[index]["UNTIL"]
-                    ]
-
-        # Parse the rrules, might return a rruleset instance, instead of rrule
-        rule = rrulestr(
+    
+    if not component.get("rrule"):
+        return None
+    
+    dtstart = component.get("dtstart").dt
+    
+    # component['rrule'] can be both a scalar and a list
+    rrules = component.get("rrule")
+    if not isinstance(rrules, list):
+        rrules = [rrules]
+        
+    def conform_until(until, dtstart):
+        if type(dtstart) is datetime:
+            return (until.astimezone(UTC) if type(until) is datetime else datetime(year=until.year, month=until.month, day=until.day, tzinfo=UTC)) + dtstart.tzinfo.utcoffset(dtstart)
+        elif type(dtstart) is date:
+            return until.date() + timedelta(days=1) if type(until) is datetime else until 
+        
+    for index, rru in enumerate(rrules):
+        if "UNTIL" in rru:
+            rrules[index]["UNTIL"] = [
+                conform_until(until, dtstart) for until in rrules[index]["UNTIL"]
+            ]
+            
+    rule = rrulestr(
             "\n".join(x.to_ical().decode() for x in rrules),
-            dtstart=rdtstart,
+            dtstart=dtstart,
             forceset=True,
             unfold=True,
         )
-
-        if component.get("exdate"):
-            # Add exdates to the rruleset
-            for exd in extract_exdates(component):
+    
+    if component.get("exdate"):
+        # Add exdates to the rruleset
+        for exd in extract_exdates(component):
+            if type(dtstart) is date:
+                if exd.tzinfo:
+                    rule.exdate(exd.replace(tzinfo=None))
+                    #rule.exdate(datetime(year=exd.year, month=exd.month, day=exd.day) + timedelta(days=1))
+                else:
+                    rule.exdate(exd)
+            else:
                 rule.exdate(exd)
 
-        # TODO: What about rdates and exrules?
-        if component.get("exrule"):
-            pass
+    # TODO: What about rdates and exrules?
+    if component.get("exrule"):
+        #pass
+        print('exrule', component.get("exrule"))
 
-        if component.get("rdate"):
-            pass
-
-    # You really want an rrule for a component without rrule? Here you are.
-    else:
-        rule = rruleset()
-        rule.rdate(normalize(component["dtstart"].dt, tz=tz))
+    if component.get("rdate"):
+        #pass
+        print('rdate', component.get("rdate"))
 
     return rule
 
@@ -549,13 +497,18 @@ def extract_exdates(component):
     :return: list of exception dates
     """
     dates = []
-
-    exd_prop = component.get("exdate")
-    if exd_prop:
-        if isinstance(exd_prop, list):  # In case there is more than one exdate property
+    if exd_prop := component.get("exdate"):
+        if isinstance(exd_prop, list):
             for exd_list in exd_prop:
-                dates.extend(normalize(exd.dt) for exd in exd_list.dts)
+                dates.extend(exd.dt for exd in exd_list.dts)
         elif isinstance(exd_prop, vDDDLists):
-            dates.extend(normalize(exd.dt) for exd in exd_prop.dts)
+            dates.extend(exd.dt for exd in exd_prop.dts)
 
-    return adjust_timezone(component, dates)
+    return dates
+
+
+def get_timezone(tz_name):
+    if tz_name in WINDOWS_TO_OLSON:
+        return gettz(WINDOWS_TO_OLSON[tz_name])
+    else:
+        return gettz(tz_name)
