@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "icalevents"
+version = "0.1.26"
+description = "Simple Python 3 library to download, parse and query iCal sources."
+authors = ["Martin Eigenmann <github@eigenmannmartin.ch>", "Thomas Irgang <thomas@irgang.eu>", "Alexander Hultnér <ahultner+github@gmail.com>"]
+license = "MIT Licence"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+httplib2 = "==0.20.1"
+icalendar = "4.0.9"
+python-dateutil = "==2.8.2"
+pytz = "==2021.3"
+DateTime = "==4.3"
+
+[tool.poetry.dev-dependencies]
+coverage = "==6.0.1"
+codecov = "==2.1.12"
+pytest = "==6.2.5"
+black = "===21.9b0"
+flake8 = "===3.7.9"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
