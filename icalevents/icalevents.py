@@ -22,7 +22,7 @@ def events(
     http=None,
     tzinfo=None,
     sort=None,
-    strict=False
+    strict=False,
 ):
     """
     Get all events form the given iCal URL occurring in the given time range.
@@ -52,7 +52,9 @@ def events(
     if not content and string_content:
         content = ical_download.data_from_string(string_content, apple_fix=fix_apple)
 
-    found_events += parse_events(content, start=start, end=end, tzinfo=tzinfo, sort=sort, strict=strict)
+    found_events += parse_events(
+        content, start=start, end=end, tzinfo=tzinfo, sort=sort, strict=strict
+    )
 
     return found_events
 

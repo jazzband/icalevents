@@ -17,6 +17,7 @@ from uuid import uuid4
 from icalendar.windows_to_olson import WINDOWS_TO_OLSON
 from pytz import timezone
 
+
 def now():
     """
     Get current time.
@@ -102,20 +103,19 @@ class Event:
             elif type(self.start) is datetime and type(other.start) is date:
                 return self.start.date() < other.start
 
-
     def __str__(self):
         return "%s: %s (%s)" % (self.start, self.summary, self.end - self.start)
 
     def astimezone(self, tzinfo):
-        
+
         if type(self.start) is datetime:
             self.start = self.start.astimezone(tzinfo)
-            
+
         if type(self.end) is datetime:
             self.end = self.end.astimezone(tzinfo)
-        
+
         return self
-    
+
     def copy_to(self, new_start=None, uid=None):
         """
         Create a new event equal to this with new start date.
@@ -226,7 +226,7 @@ def create_event(component, utc_default):
 
     if component.get("RECURRENCE-ID"):
         rid = component.get("RECURRENCE-ID").dt
-        
+
         # Spec defines that if DTSTART is a date RECURRENCE-ID also is to be interpreted as a date
         if type(component.get("dtstart").dt) is date:
             event.recurrence_id = date(year=rid.year, month=rid.month, day=rid.day)
@@ -258,7 +258,15 @@ def create_event(component, utc_default):
     return event
 
 
-def parse_events(content, start=None, end=None, default_span=timedelta(days=7), tzinfo=None, sort=False, strict=False):
+def parse_events(
+    content,
+    start=None,
+    end=None,
+    default_span=timedelta(days=7),
+    tzinfo=None,
+    sort=False,
+    strict=False,
+):
     """
     Query the events occurring in a given time range.
 
@@ -278,13 +286,12 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7), 
         raise ValueError("Content is invalid!")
 
     calendar = Calendar.from_ical(content)
-    
-    
+
     # > Will be deprecated ========================
     # Calendar.from_ical already parses timezones as specified in the ical.
     # We can specify a 'default' tz but this is not according to spec.
     # Kept this here to verify tests and backward compatibility
-    
+
     # Keep track of the timezones defined in the calendar
     timezones = {}
 
@@ -313,9 +320,9 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7), 
         utc_default = True
         cal_tz = UTC
     # < ==========================================
-    
+
     found = []
-    
+
     def add_if_not_exception(event):
         exdate = "%04d%02d%02d" % (
             event.start.year,
@@ -325,10 +332,10 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7), 
 
         if exdate not in exceptions:
             found.append(event)
-            
-    for component in calendar.walk():  
+
+    for component in calendar.walk():
         exceptions = {}
-        
+
         if "EXDATE" in component:
             # Deal with the fact that sometimes it's a list and
             # sometimes it's a singleton
@@ -340,19 +347,25 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7), 
             for ex in exlist:
                 exdate = ex.to_ical().decode("UTF-8")
                 exceptions[exdate[0:8]] = exdate
-    
+
         if component.name == "VEVENT":
             e = create_event(component, utc_default)
-            
+
             # make rule.between happy and provide from, to points in time that have the same format as dtstart
-            s = component['dtstart'].dt
+            s = component["dtstart"].dt
             if type(s) is date and not e.recurring:
-                f, t = date(start.year, start.month, start.day), date(end.year, end.month, end.day)
+                f, t = date(start.year, start.month, start.day), date(
+                    end.year, end.month, end.day
+                )
             elif type(s) is datetime and s.tzinfo:
-                f, t = datetime(start.year, start.month, start.day, tzinfo=s.tzinfo), datetime(end.year, end.month, end.day, tzinfo=s.tzinfo)
+                f, t = datetime(
+                    start.year, start.month, start.day, tzinfo=s.tzinfo
+                ), datetime(end.year, end.month, end.day, tzinfo=s.tzinfo)
             else:
-                f, t = datetime(start.year, start.month, start.day), datetime(end.year, end.month, end.day)
-                
+                f, t = datetime(start.year, start.month, start.day), datetime(
+                    end.year, end.month, end.day
+                )
+
             if e.recurring:
                 rule = parse_rrule(component)
                 for dt in rule.between(f, t, inc=True):
@@ -361,18 +374,18 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7), 
                     # recurrence has crossed over the daylight savings time boundary.
                     if type(dt) is datetime and dt.tzinfo:
                         dtstart = dt.replace(tzinfo=get_timezone(str(dt.tzinfo)))
-                        ecopy = e.copy_to(dtstart.date() if type(s) is date else dtstart, e.uid)
+                        ecopy = e.copy_to(
+                            dtstart.date() if type(s) is date else dtstart, e.uid
+                        )
                     else:
                         ecopy = e.copy_to(dt.date() if type(s) is date else dt, e.uid)
                     add_if_not_exception(ecopy)
-                    
+
             elif e.end >= f and e.start <= t:
                 add_if_not_exception(e)
-            
-                
 
     result = found.copy()
-    
+
     # Remove events that are replaced in ical
     for event in found:
         if not event.recurrence_id and (event.uid, event.start) in [
@@ -386,8 +399,22 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7), 
     if not strict:
         for event in result:
             if type(event.start) is date:
-                event.start = datetime(year=event.start.year, month=event.start.month, day=event.start.day, hour=0, minute=0, tzinfo=cal_tz)
-                event.end = datetime(year=event.end.year, month=event.end.month, day=event.end.day, hour=0, minute=0, tzinfo=cal_tz)
+                event.start = datetime(
+                    year=event.start.year,
+                    month=event.start.month,
+                    day=event.start.day,
+                    hour=0,
+                    minute=0,
+                    tzinfo=cal_tz,
+                )
+                event.end = datetime(
+                    year=event.end.year,
+                    month=event.end.month,
+                    day=event.end.day,
+                    hour=0,
+                    minute=0,
+                    tzinfo=cal_tz,
+                )
             elif type(event.start) is datetime:
                 if event.start.tzinfo:
                     event.start = event.start.astimezone(cal_tz)
@@ -395,19 +422,33 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7), 
                 else:
                     event.start = event.start.replace(tzinfo=cal_tz)
                     event.end = event.end.replace(tzinfo=cal_tz)
-            
-            if event.created:         
+
+            if event.created:
                 if type(event.created) is date:
-                    event.created = datetime(year=event.created.year, month=event.created.month, day=event.created.day, hour=0, minute=0, tzinfo=cal_tz)
+                    event.created = datetime(
+                        year=event.created.year,
+                        month=event.created.month,
+                        day=event.created.day,
+                        hour=0,
+                        minute=0,
+                        tzinfo=cal_tz,
+                    )
                 if type(event.created) is datetime:
                     if event.created.tzinfo:
                         event.created = event.created.astimezone(cal_tz)
                     else:
                         event.created = event.created.replace(tzinfo=cal_tz)
-                        
-            if event.last_modified:         
+
+            if event.last_modified:
                 if type(event.last_modified) is date:
-                    event.last_modified = datetime(year=event.last_modified.year, month=event.last_modified.month, day=event.last_modified.day, hour=0, minute=0, tzinfo=cal_tz)
+                    event.last_modified = datetime(
+                        year=event.last_modified.year,
+                        month=event.last_modified.month,
+                        day=event.last_modified.day,
+                        hour=0,
+                        minute=0,
+                        tzinfo=cal_tz,
+                    )
                 if type(event.last_modified) is datetime:
                     if event.last_modified.tzinfo:
                         event.last_modified = event.last_modified.astimezone(cal_tz)
@@ -417,12 +458,10 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7), 
 
     if sort:
         result.sort()
-    
+
     if tzinfo:
         result = [event.astimezone(tzinfo) for event in result]
-        
 
-    
     return result
 
 
@@ -435,43 +474,51 @@ def parse_rrule(component):
     :param component: icalendar component
     :return: extracted rrule or rruleset or None
     """
-    
+
     if not component.get("rrule"):
         return None
-    
+
     dtstart = component.get("dtstart").dt
-    
+
     # component['rrule'] can be both a scalar and a list
     rrules = component.get("rrule")
     if not isinstance(rrules, list):
         rrules = [rrules]
-        
+
     def conform_until(until, dtstart):
         if type(dtstart) is datetime:
-            return (until.astimezone(UTC) if type(until) is datetime else datetime(year=until.year, month=until.month, day=until.day, tzinfo=UTC)) + dtstart.tzinfo.utcoffset(dtstart)
+            return (
+                until.astimezone(UTC)
+                if type(until) is datetime
+                else datetime(
+                    year=until.year, month=until.month, day=until.day, tzinfo=UTC
+                )
+            ) + dtstart.tzinfo.utcoffset(dtstart)
         elif type(dtstart) is date:
-            return until.date() + timedelta(days=1) if type(until) is datetime else until 
-        
+            return (
+                until.date() + timedelta(days=1) if type(until) is datetime else until
+            )
+
     for index, rru in enumerate(rrules):
         if "UNTIL" in rru:
             rrules[index]["UNTIL"] = [
                 conform_until(until, dtstart) for until in rrules[index]["UNTIL"]
             ]
-            
+
     rule = rrulestr(
-            "\n".join(x.to_ical().decode() for x in rrules),
-            dtstart=dtstart,
-            forceset=True,
-            unfold=True,
-        )
-    
+        "\n".join(x.to_ical().decode() for x in rrules),
+        dtstart=dtstart,
+        forceset=True,
+        unfold=True,
+    )
+
     if component.get("exdate"):
         # Add exdates to the rruleset
         for exd in extract_exdates(component):
             if type(dtstart) is date:
                 if exd.tzinfo:
                     rule.exdate(exd.replace(tzinfo=None))
-                    #rule.exdate(datetime(year=exd.year, month=exd.month, day=exd.day) + timedelta(days=1))
+                    # rule.exdate(datetime(year=exd.year, month=exd.month, day=exd.day) + timedelta(days=1))
                 else:
                     rule.exdate(exd)
             else:
@@ -479,12 +526,12 @@ def parse_rrule(component):
 
     # TODO: What about rdates and exrules?
     if component.get("exrule"):
-        #pass
-        print('exrule', component.get("exrule"))
+        # pass
+        print("exrule", component.get("exrule"))
 
     if component.get("rdate"):
-        #pass
-        print('rdate', component.get("rdate"))
+        # pass
+        print("rdate", component.get("rdate"))
 
     return rule
 
