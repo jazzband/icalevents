@@ -450,3 +450,26 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(ev3.status, "CANCELLED")
         self.assertEqual(ev4.status, "CANCELLED")
         self.assertEqual(ev5.status, None)
+
+    def test_recurrence_exdate(self):
+        ical = "test/test_data/recurring_exdate.ics"
+        start = date(2022, 1, 10)
+        end = date(2022, 1, 12)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(len(evs), 12)
+        evs = sorted(evs)
+
+        [ev1, ev2, ev3, ev4, ev5, ev6, ev7, ev8, ev9, ev10, ev11, ev12] = evs
+        self.assertEqual(ev1.summary, "Recurring event 3")
+        self.assertEqual(ev2.summary, "Event 2 replacing recurring event with exdate")
+        self.assertEqual(ev3.summary, "Event 1 replacing recurring event with exdate")
+        self.assertEqual(ev4.summary, "Recurring event 2")
+        self.assertEqual(ev5.summary, "Recurring event 4")
+        self.assertEqual(ev6.summary, "Recurring event 1")
+        self.assertEqual(ev7.summary, "Recurring event 3")
+        self.assertEqual(ev8.summary, "Recurring event with exdate")
+        self.assertEqual(ev9.summary, "Recurring event 2")
+        self.assertEqual(ev10.summary, "Recurring event 4")
+        self.assertEqual(ev11.summary, "Recurring event 1")
+        self.assertEqual(ev12.summary, "Recurring event 3")
