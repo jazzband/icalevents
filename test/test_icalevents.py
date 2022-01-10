@@ -425,7 +425,7 @@ class ICalEventsTests(unittest.TestCase):
 
         evs = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(len(evs), 115, "4 events in total")
+        self.assertEqual(len(evs), 116, "4 events in total")
 
     def test_transparent(self):
         ical = "test/test_data/transparent.ics"

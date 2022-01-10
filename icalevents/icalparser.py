@@ -344,8 +344,6 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     found = []
     recurrence_ids = []
 
-    # Skip dates that are stored as exceptions.
-    exceptions = {}
     for component in calendar.walk():
         if component.name == "VEVENT":
             e = create_event(component, cal_tz)
@@ -355,6 +353,8 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                     (e.uid, component["RECURRENCE-ID"].dt, e.sequence)
                 )
 
+            # Skip dates that are stored as exceptions.
+            exceptions = {}
             if "EXDATE" in component:
                 # Deal with the fact that sometimes it's a list and
                 # sometimes it's a singleton
