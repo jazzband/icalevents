@@ -400,7 +400,7 @@ class ICalEventsTests(unittest.TestCase):
             e1.start.tzinfo, gettz("Europe/Berlin"), "check tz as specified in calendar"
         )
 
-    def test_recurence_id_ms(self):
+    def test_recurrence_id_ms(self):
         ical = "test/test_data/recurrenceid_ms.ics"
         start = date(2021, 1, 1)
         end = date(2021, 12, 31)
@@ -409,7 +409,7 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertEqual(len(evs), 41, "41 events in total - one was moved")
 
-    def test_recurence_id_google(self):
+    def test_recurrence_id_google(self):
         ical = "test/test_data/recurrenceid_google.ics"
         start = date(2021, 1, 1)
         end = date(2021, 12, 31)
