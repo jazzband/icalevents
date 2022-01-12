@@ -424,6 +424,17 @@ class ICalEventsTests(unittest.TestCase):
         end = date(2021, 12, 31)
 
         evs = icalevents.events(file=ical, start=start, end=end)
+        evs.sort()
+
+        expected_events_file = "test/test_data/cest.ics_2021_01_01-2021-12-31"
+
+        with open(expected_events_file, "r") as f:
+            for i, (line, ev) in enumerate(zip(f, evs)):
+                self.assertEqual(
+                    line,
+                    f"{ev.uid} {ev.summary} {ev.start} {ev.end}\n",
+                    f"event {i} doesn't match anymore",
+                )
 
         self.assertEqual(len(evs), 115, "4 events in total")
 
