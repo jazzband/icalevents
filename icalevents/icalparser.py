@@ -14,6 +14,7 @@ from icalendar import Calendar
 from icalendar.windows_to_olson import WINDOWS_TO_OLSON
 from icalendar.prop import vDDDLists, vText
 from pytz import timezone
+import copy
 
 
 def now():
@@ -52,6 +53,7 @@ class Event:
         self.categories = None
         self.status = None
         self.url = None
+        self.alarms = []
 
     def time_left(self, time=None):
         """
@@ -145,6 +147,7 @@ class Event:
         ne.categories = self.categories
         ne.status = self.status
         ne.url = self.url
+        ne.alarms = copy.deepcopy(self.alarms)
 
         return ne
 
@@ -166,7 +169,6 @@ def create_event(component, tz=UTC):
     :param tz: timezone for start and end times
     :return: event
     """
-
     event = Event()
 
     event.start = normalize(component.get("dtstart").dt, tz=tz)
@@ -436,6 +438,26 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 exdate = "%04d%02d%02d" % (e.start.year, e.start.month, e.start.day)
                 if exdate not in exceptions:
                     found.append(e)
+        elif component.name == "VALARM":
+            trigger = component.get('TRIGGER')
+            alarm_dt = None
+            trigger_dt = trigger.dt
+            if isinstance(trigger_dt, timedelta):
+                event_start = e.start
+                if type(event_start) == datetime.date: # support full day events
+                    event_start = datetime(event_start.year, event_start.month, event_start.day)
+                alarm_dt = event_start + trigger_dt
+            elif isinstance(trigger_dt, datetime):
+                #XXX timezone
+                alarm_dt = trigger_dt
+            else:
+                log.debug("Can't handle {trigger.dt} TRIGGER objects.")
+            summary = e.summary
+            if str(component.get('ACTION')) == 'DISPLAY':
+                summary = str(component.get('DESCRIPTION'))
+            alarm_uid = component.get('UID')
+            e.alarms.append(dict(summary=summary, alarm_dt=alarm_dt, uid=alarm_uid))
+
     # Filter out all events that are moved as indicated by the recurrence-id prop
     return [
         event
