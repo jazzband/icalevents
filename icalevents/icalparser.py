@@ -369,6 +369,29 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                     exdate = ex.to_ical().decode("UTF-8")
                     exceptions[exdate[0:8]] = exdate
 
+
+            for subcomponent in component.subcomponents:
+                if subcomponent.name == "VALARM":
+                    trigger = subcomponent.get('TRIGGER')
+                    alarm_dt = None
+                    trigger_dt = trigger.dt
+                    if isinstance(trigger_dt, timedelta):
+                        event_start = e.start
+                        if type(event_start) == datetime.date: # support full day events
+                            event_start = datetime(event_start.year, event_start.month, event_start.day)
+                        alarm_dt = event_start + trigger_dt
+                    elif isinstance(trigger_dt, datetime):
+                        #XXX timezone
+                        alarm_dt = trigger_dt
+                    else:
+                        log.debug("Can't handle {trigger.dt} TRIGGER objects.")
+                    summary = e.summary
+                    if str(subcomponent.get('ACTION')) == 'DISPLAY':
+                        summary = str(subcomponent.get('DESCRIPTION'))
+                    alarm_uid = subcomponent.get('UID')
+                    e.alarms.append(dict(summary=summary, alarm_dt=alarm_dt, uid=alarm_uid))
+
+
             # Attempt to work out what timezone is used for the start
             # and end times. If the timezone is defined in the calendar,
             # use it; otherwise, attempt to load the rules from pytz.
@@ -438,26 +461,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 exdate = "%04d%02d%02d" % (e.start.year, e.start.month, e.start.day)
                 if exdate not in exceptions:
                     found.append(e)
-            for subcomponent in component.subcomponents:
-                if subcomponent.name == "VALARM":
-                    trigger = subcomponent.get('TRIGGER')
-                    alarm_dt = None
-                    trigger_dt = trigger.dt
-                    if isinstance(trigger_dt, timedelta):
-                        event_start = e.start
-                        if type(event_start) == datetime.date: # support full day events
-                            event_start = datetime(event_start.year, event_start.month, event_start.day)
-                        alarm_dt = event_start + trigger_dt
-                    elif isinstance(trigger_dt, datetime):
-                        #XXX timezone
-                        alarm_dt = trigger_dt
-                    else:
-                        log.debug("Can't handle {trigger.dt} TRIGGER objects.")
-                    summary = e.summary
-                    if str(subcomponent.get('ACTION')) == 'DISPLAY':
-                        summary = str(subcomponent.get('DESCRIPTION'))
-                    alarm_uid = subcomponent.get('UID')
-                    e.alarms.append(dict(summary=summary, alarm_dt=alarm_dt, uid=alarm_uid))
+
 
     # Filter out all events that are moved as indicated by the recurrence-id prop
     return [
