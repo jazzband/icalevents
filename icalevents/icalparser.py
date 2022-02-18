@@ -392,7 +392,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                     summary = e.summary
                     action = str(subcomponent.get('ACTION'))
                     description = str(subcomponent.get('DESCRIPTION'))
-                    alarm_uid = subcomponent.get('UID') or component.get('UID')
+                    alarm_uid = subcomponent.get('UID')
                     e.alarms.append(dict(
                         summary=summary,
                         description=description,
