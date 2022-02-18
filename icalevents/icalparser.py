@@ -390,10 +390,16 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                     trigger_dt = trigger.dt
                     alarm_dt = calculate_alarm_dt(trigger_dt, e.start)
                     summary = e.summary
-                    if str(subcomponent.get('ACTION')) == 'DISPLAY':
-                        summary = str(subcomponent.get('DESCRIPTION'))
+                    action = str(subcomponent.get('ACTION'))
+                    description = str(subcomponent.get('DESCRIPTION'))
                     alarm_uid = subcomponent.get('UID') or component.get('UID')
-                    e.alarms.append(dict(summary=summary, alarm_dt=alarm_dt, uid=alarm_uid, trigger_dt=trigger_dt))
+                    e.alarms.append(dict(
+                        summary=summary,
+                        description=description,
+                        alarm_dt=alarm_dt,
+                        action=action,
+                        uid=alarm_uid,
+                        trigger_dt=trigger_dt))
 
 
             # Attempt to work out what timezone is used for the start
