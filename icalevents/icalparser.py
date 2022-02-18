@@ -147,7 +147,7 @@ class Event:
         ne.categories = self.categories
         ne.status = self.status
         ne.url = self.url
-        ne.alarms = self.alarms
+        ne.alarms = copy.deepcopy(self.alarms)
 
         return ne
 
@@ -293,6 +293,19 @@ def adjust_timezone(component, dates, tz=None):
     return dates
 
 
+def calculate_alarm_dt(trigger_dt, event_start):
+    if isinstance(trigger_dt, timedelta):
+        if type(event_start) == datetime.date: # support full day events
+            event_start = datetime(event_start.year, event_start.month, event_start.day)
+        return event_start + trigger_dt
+    elif isinstance(trigger_dt, datetime):
+        #XXX timezone
+        return trigger_dt
+    else:
+        log.debug("Can't handle {trigger.dt} TRIGGER objects.")
+
+
+
 def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     """
     Query the events occurring in a given time range.
@@ -375,21 +388,12 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                     trigger = subcomponent.get('TRIGGER')
                     alarm_dt = None
                     trigger_dt = trigger.dt
-                    if isinstance(trigger_dt, timedelta):
-                        event_start = e.start
-                        if type(event_start) == datetime.date: # support full day events
-                            event_start = datetime(event_start.year, event_start.month, event_start.day)
-                        alarm_dt = event_start + trigger_dt
-                    elif isinstance(trigger_dt, datetime):
-                        #XXX timezone
-                        alarm_dt = trigger_dt
-                    else:
-                        log.debug("Can't handle {trigger.dt} TRIGGER objects.")
+                    alarm_dt = calculate_alarm_dt(trigger_dt, e.start)
                     summary = e.summary
                     if str(subcomponent.get('ACTION')) == 'DISPLAY':
                         summary = str(subcomponent.get('DESCRIPTION'))
-                    alarm_uid = subcomponent.get('UID')
-                    e.alarms.append(dict(summary=summary, alarm_dt=alarm_dt, uid=alarm_uid))
+                    alarm_uid = subcomponent.get('UID') or component.get('UID')
+                    e.alarms.append(dict(summary=summary, alarm_dt=alarm_dt, uid=alarm_uid, trigger_dt=trigger_dt))
 
 
             # Attempt to work out what timezone is used for the start
@@ -455,6 +459,8 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                         ecopy.start.month,
                         ecopy.start.day,
                     )
+                    for alarm in ecopy.alarms:
+                        alarm['alarm_dt'] = calculate_alarm_dt(alarm['trigger_dt'], ecopy.start)
                     if exdate not in exceptions:
                         found.append(ecopy)
             elif e.end >= start and e.start <= end:
