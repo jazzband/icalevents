@@ -295,15 +295,11 @@ def adjust_timezone(component, dates, tz=None):
 
 def calculate_alarm_dt(trigger_dt, event_start):
     if isinstance(trigger_dt, timedelta):
-        if type(event_start) == datetime.date: # support full day events
+        if type(event_start) == datetime.date:  # support full day events
             event_start = datetime(event_start.year, event_start.month, event_start.day)
         return event_start + trigger_dt
     elif isinstance(trigger_dt, datetime):
-        #XXX timezone
         return trigger_dt
-    else:
-        log.debug("Can't handle {trigger.dt} TRIGGER objects.")
-
 
 
 def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
@@ -382,25 +378,35 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                     exdate = ex.to_ical().decode("UTF-8")
                     exceptions[exdate[0:8]] = exdate
 
-
             for subcomponent in component.subcomponents:
                 if subcomponent.name == "VALARM":
-                    trigger = subcomponent.get('TRIGGER')
+                    trigger = subcomponent.get("TRIGGER")
+                    if trigger is None:
+                        continue
                     alarm_dt = None
                     trigger_dt = trigger.dt
                     alarm_dt = calculate_alarm_dt(trigger_dt, e.start)
-                    summary = e.summary
-                    action = str(subcomponent.get('ACTION'))
-                    description = str(subcomponent.get('DESCRIPTION'))
-                    alarm_uid = subcomponent.get('UID')
-                    e.alarms.append(dict(
-                        summary=summary,
-                        description=description,
-                        alarm_dt=alarm_dt,
-                        action=action,
-                        uid=alarm_uid,
-                        trigger_dt=trigger_dt))
-
+                    action = str(subcomponent.get("ACTION", ""))
+                    attachment = str(subcomponent.get("ATTACH", ""))
+                    description = str(subcomponent.get("DESCRIPTION", ""))
+                    alarm_uid = subcomponent.get("UID")
+                    if alarm_uid is None:
+                        # try to get other X-FOO-UID
+                        for key in subcomponent.keys():
+                            if key.endswith("-UID"):
+                                alarm_uid = subcomponent.get(key)
+                    if alarm_uid is None:
+                        alarm_uid = ""
+                    e.alarms.append(
+                        dict(
+                            description=description,
+                            alarm_dt=alarm_dt,
+                            action=action,
+                            attachment=attachment,
+                            uid=str(alarm_uid),
+                            trigger_dt=trigger_dt,
+                        )
+                    )
 
             # Attempt to work out what timezone is used for the start
             # and end times. If the timezone is defined in the calendar,
@@ -466,14 +472,15 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                         ecopy.start.day,
                     )
                     for alarm in ecopy.alarms:
-                        alarm['alarm_dt'] = calculate_alarm_dt(alarm['trigger_dt'], ecopy.start)
+                        alarm["alarm_dt"] = calculate_alarm_dt(
+                            alarm["trigger_dt"], ecopy.start
+                        )
                     if exdate not in exceptions:
                         found.append(ecopy)
             elif e.end >= start and e.start <= end:
                 exdate = "%04d%02d%02d" % (e.start.year, e.start.month, e.start.day)
                 if exdate not in exceptions:
                     found.append(e)
-
 
     # Filter out all events that are moved as indicated by the recurrence-id prop
     return [
