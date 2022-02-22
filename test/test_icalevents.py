@@ -450,3 +450,80 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(ev3.status, "CANCELLED")
         self.assertEqual(ev4.status, "CANCELLED")
         self.assertEqual(ev5.status, None)
+
+    def test_alarms_absolute(self):
+        """Alarms which are set to a fixed datetime are properly
+        returned."""
+        ical = "test/test_data/basic.ics"
+        start = date(2017, 5, 16)
+        evs = icalevents.events(url=None, file=ical, start=start)
+        self.assertEqual(
+            datetime(1976, 4, 1, 0, 55, 45, tzinfo=UTC), evs[0].alarms[0]["alarm_dt"]
+        )
+
+    def test_alarms_relative(self):
+        """Alarms which are set to a relative datetime are properly
+        returned."""
+        ical = "test/test_data/basic.ics"
+        start = date(2017, 3, 19)
+        evs = icalevents.events(url=None, file=ical, start=start)
+        self.assertEqual(
+            datetime(2017, 3, 19, 9, 0, tzinfo=evs[0].start.tzinfo),
+            evs[0].alarms[0]["alarm_dt"],
+        )
+        self.assertEqual(timedelta(hours=-15), evs[0].alarms[0]["trigger_dt"])
+
+    def test_alarms_recurring(self):
+        """Recurrences get their own alarm each."""
+        ical = "test/test_data/recurring_alarm.ics"
+        start = date(2020, 3, 19)
+        end = start + timedelta(days=20)
+        evs = icalevents.events(url=None, file=ical, start=start, end=end)
+        expected_tz = evs[0].start.tzinfo
+        self.assertEqual(
+            datetime(2020, 3, 23, 9, 0, tzinfo=expected_tz),
+            evs[0].alarms[0]["alarm_dt"],
+        )
+        self.assertEqual(
+            datetime(2020, 3, 30, 9, 0, tzinfo=expected_tz),
+            evs[1].alarms[0]["alarm_dt"],
+        )
+        self.assertEqual(
+            datetime(2020, 4, 6, 9, 0, tzinfo=expected_tz), evs[2].alarms[0]["alarm_dt"]
+        )
+
+    def test_alarms_data__1(self):
+        ical = "test/test_data/recurring_alarm.ics"
+        start = date(2020, 3, 19)
+        evs = icalevents.events(url=None, file=ical, start=start)
+        expected_tz = evs[0].start.tzinfo
+        # apple
+        expected = {
+            "action": "AUDIO",
+            "alarm_dt": datetime(2020, 3, 23, 9, 0, tzinfo=expected_tz),
+            "attachment": "Basso",
+            "description": "",
+            "trigger_dt": timedelta(hours=-15),
+            "uid": "4BB6A40E-6845-4541-BD87-0962514D03DC",
+        }
+        self.assertEqual(expected, evs[0].alarms[0])
+        # evolution
+        expected = {
+            "action": "DISPLAY",
+            "alarm_dt": datetime(2020, 3, 21, 0, 0, tzinfo=expected_tz),
+            "attachment": "",
+            "description": "Funny Description",
+            "trigger_dt": timedelta(days=-3),
+            "uid": "def4351cbf2dc54c4019fa7a5b8557ec3b9ee26d",
+        }
+        self.assertEqual(expected, evs[0].alarms[1])
+        # google
+        expected = {
+            "action": "DISPLAY",
+            "alarm_dt": datetime(2020, 3, 23, 14, 0, tzinfo=expected_tz),
+            "attachment": "",
+            "description": "This is an event reminder",
+            "trigger_dt": timedelta(hours=-10),
+            "uid": "",
+        }
+        self.assertEqual(expected, evs[0].alarms[2])

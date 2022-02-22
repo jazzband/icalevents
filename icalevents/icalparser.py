@@ -14,6 +14,7 @@ from icalendar import Calendar
 from icalendar.windows_to_olson import WINDOWS_TO_OLSON
 from icalendar.prop import vDDDLists, vText
 from pytz import timezone
+import copy
 
 
 def now():
@@ -52,6 +53,7 @@ class Event:
         self.categories = None
         self.status = None
         self.url = None
+        self.alarms = []
 
     def time_left(self, time=None):
         """
@@ -145,6 +147,7 @@ class Event:
         ne.categories = self.categories
         ne.status = self.status
         ne.url = self.url
+        ne.alarms = copy.deepcopy(self.alarms)
 
         return ne
 
@@ -166,7 +169,6 @@ def create_event(component, tz=UTC):
     :param tz: timezone for start and end times
     :return: event
     """
-
     event = Event()
 
     event.start = normalize(component.get("dtstart").dt, tz=tz)
@@ -291,6 +293,15 @@ def adjust_timezone(component, dates, tz=None):
     return dates
 
 
+def calculate_alarm_dt(trigger_dt, event_start):
+    if isinstance(trigger_dt, timedelta):
+        if type(event_start) == datetime.date:  # support full day events
+            event_start = datetime(event_start.year, event_start.month, event_start.day)
+        return event_start + trigger_dt
+    elif isinstance(trigger_dt, datetime):
+        return trigger_dt
+
+
 def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     """
     Query the events occurring in a given time range.
@@ -367,6 +378,36 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                     exdate = ex.to_ical().decode("UTF-8")
                     exceptions[exdate[0:8]] = exdate
 
+            for subcomponent in component.subcomponents:
+                if subcomponent.name == "VALARM":
+                    trigger = subcomponent.get("TRIGGER")
+                    if trigger is None:
+                        continue
+                    alarm_dt = None
+                    trigger_dt = trigger.dt
+                    alarm_dt = calculate_alarm_dt(trigger_dt, e.start)
+                    action = str(subcomponent.get("ACTION", ""))
+                    attachment = str(subcomponent.get("ATTACH", ""))
+                    description = str(subcomponent.get("DESCRIPTION", ""))
+                    alarm_uid = subcomponent.get("UID")
+                    if alarm_uid is None:
+                        # try to get other X-FOO-UID
+                        for key in subcomponent.keys():
+                            if key.endswith("-UID"):
+                                alarm_uid = subcomponent.get(key)
+                    if alarm_uid is None:
+                        alarm_uid = ""
+                    e.alarms.append(
+                        dict(
+                            description=description,
+                            alarm_dt=alarm_dt,
+                            action=action,
+                            attachment=attachment,
+                            uid=str(alarm_uid),
+                            trigger_dt=trigger_dt,
+                        )
+                    )
+
             # Attempt to work out what timezone is used for the start
             # and end times. If the timezone is defined in the calendar,
             # use it; otherwise, attempt to load the rules from pytz.
@@ -430,12 +471,17 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                         ecopy.start.month,
                         ecopy.start.day,
                     )
+                    for alarm in ecopy.alarms:
+                        alarm["alarm_dt"] = calculate_alarm_dt(
+                            alarm["trigger_dt"], ecopy.start
+                        )
                     if exdate not in exceptions:
                         found.append(ecopy)
             elif e.end >= start and e.start <= end:
                 exdate = "%04d%02d%02d" % (e.start.year, e.start.month, e.start.day)
                 if exdate not in exceptions:
                     found.append(e)
+
     # Filter out all events that are moved as indicated by the recurrence-id prop
     return [
         event

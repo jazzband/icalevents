@@ -1,6 +1,6 @@
 import unittest
 import icalevents.icalparser
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from dateutil.tz import UTC, gettz
 
 
@@ -18,6 +18,18 @@ class ICalParserTests(unittest.TestCase):
         self.eventA.summary = "Event A"
         self.eventA.attendee = "name@example.com"
         self.eventA.organizer = "name@example.com"
+        trigger_dt = timedelta(days=-1)
+        alarm_dt = self.eventA.start + trigger_dt
+        self.eventA.alarms = [
+            dict(
+                summary="Reminder for Event A",
+                description="",
+                alarm_dt=alarm_dt,
+                action="",
+                uid="alarm_uid",
+                trigger_dt=trigger_dt,
+            )
+        ]
 
         self.eventB = icalevents.icalparser.Event()
         self.eventB.uid = 1234
@@ -59,6 +71,10 @@ class ICalParserTests(unittest.TestCase):
             self.eventA.end - self.eventA.start,
             "new event has same duration",
         )
+        self.assertEqual(len(eventC.alarms), 1)
+        self.eventA.alarms.append("test")
+        self.assertEqual(len(eventC.alarms), 1, "alarms is a copy")
+
         self.assertEqual(eventC.all_day, False, "new event is no all day event")
         self.assertEqual(eventC.summary, self.eventA.summary, "copy to: summary")
         self.assertEqual(
