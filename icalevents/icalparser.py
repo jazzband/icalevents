@@ -344,9 +344,10 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     found = []
     recurrence_ids = []
 
-    # Skip dates that are stored as exceptions.
-    exceptions = {}
     for component in calendar.walk():
+        # Skip dates that are stored as exceptions.
+        exceptions = {}
+
         if component.name == "VEVENT":
             e = create_event(component, cal_tz)
 
@@ -359,7 +360,9 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 # Deal with the fact that sometimes it's a list and
                 # sometimes it's a singleton
                 exlist = []
-                if isinstance(component["EXDATE"], list):
+                if isinstance(component["EXDATE"], vDDDLists):
+                    exlist = component["EXDATE"].dts
+                elif isinstance(component["EXDATE"], list):
                     exlist = component["EXDATE"]
                 else:
                     exlist.append(component["EXDATE"])

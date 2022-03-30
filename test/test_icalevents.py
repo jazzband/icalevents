@@ -425,7 +425,7 @@ class ICalEventsTests(unittest.TestCase):
 
         evs = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(len(evs), 115, "4 events in total")
+        self.assertEqual(len(evs), 116, "4 events in total")
 
     def test_transparent(self):
         ical = "test/test_data/transparent.ics"
@@ -450,3 +450,22 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(ev3.status, "CANCELLED")
         self.assertEqual(ev4.status, "CANCELLED")
         self.assertEqual(ev5.status, None)
+
+    def test_multi_exdate_same_line(self):
+        ical = "test/test_data/multi_exdate_same_line_ms.ics"
+        tz = gettz("America/New_York")
+        start = date(2022, 3, 1)
+        end = date(2022, 5, 1)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        # parsing starts at 2022-03-01
+        self.assertEqual(evs[0].start, datetime(2022, 3, 11, 11, 0, 0, tzinfo=tz))
+        # 2022-03-18 is excluded by EXDATE rule
+        self.assertEqual(evs[1].start, datetime(2022, 3, 25, 11, 0, 0, tzinfo=tz))
+        # 2022-04-01 is excluded by EXDATE rule
+        # 2022-04-08 is excluded by EXDATE rule
+        self.assertEqual(evs[2].start, datetime(2022, 4, 15, 11, 0, 0, tzinfo=tz))
+        self.assertEqual(evs[3].start, datetime(2022, 4, 22, 11, 0, 0, tzinfo=tz))
+        self.assertEqual(evs[4].start, datetime(2022, 4, 29, 11, 0, 0, tzinfo=tz))
+        # parsing stops at 2022-05-01
