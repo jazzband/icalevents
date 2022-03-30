@@ -350,10 +350,8 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
         if component.name == "VEVENT":
             e = create_event(component, cal_tz)
 
-            if "RECURRENCE-ID" in component:
-                recurrence_ids.append(
-                    (e.uid, component["RECURRENCE-ID"].dt, e.sequence)
-                )
+            if "RECURRENCE-ID" in component and e.sequence is not None:
+                recurrence_ids.append((e.uid, component["RECURRENCE-ID"].dt))
 
             if "EXDATE" in component:
                 # Deal with the fact that sometimes it's a list and
@@ -436,12 +434,12 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 exdate = "%04d%02d%02d" % (e.start.year, e.start.month, e.start.day)
                 if exdate not in exceptions:
                     found.append(e)
+
     # Filter out all events that are moved as indicated by the recurrence-id prop
     return [
         event
         for event in found
-        if e.sequence is None
-        or not (event.uid, event.start, e.sequence) in recurrence_ids
+        if event.sequence is not None or (event.uid, event.start) not in recurrence_ids
     ]
 
 
