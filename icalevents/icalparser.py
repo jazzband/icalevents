@@ -342,7 +342,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     end = normalize(end, cal_tz)
 
     found = []
-    recurrence_ids = []
+    recurrence_ids = {}
 
     # Skip dates that are stored as exceptions.
     exceptions = {}
@@ -351,9 +351,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
             e = create_event(component, cal_tz)
 
             if "RECURRENCE-ID" in component:
-                recurrence_ids.append(
-                    (e.uid, component["RECURRENCE-ID"].dt, e.sequence)
-                )
+                recurrence_ids[(e.uid, component["RECURRENCE-ID"].dt)] = e.sequence
 
             if "EXDATE" in component:
                 # Deal with the fact that sometimes it's a list and
@@ -437,12 +435,14 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 if exdate not in exceptions:
                     found.append(e)
     # Filter out all events that are moved as indicated by the recurrence-id prop
-    return [
-        event
-        for event in found
-        if e.sequence is None
-        or not (event.uid, event.start, e.sequence) in recurrence_ids
-    ]
+    found_filtered = []
+    for event in found:
+        key = (event.uid, event.start)
+        if key in recurrence_ids and recurrence_ids[key] != event.sequence:
+            continue
+        found_filtered.append(event)
+
+    return found_filtered
 
 
 def parse_rrule(component, tz=UTC):

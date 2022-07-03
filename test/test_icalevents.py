@@ -400,7 +400,7 @@ class ICalEventsTests(unittest.TestCase):
             e1.start.tzinfo, gettz("Europe/Berlin"), "check tz as specified in calendar"
         )
 
-    def test_recurence_id_ms(self):
+    def test_recurrence_id_ms(self):
         ical = "test/test_data/recurrenceid_ms.ics"
         start = date(2021, 1, 1)
         end = date(2021, 12, 31)
@@ -409,7 +409,7 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertEqual(len(evs), 41, "41 events in total - one was moved")
 
-    def test_recurence_id_google(self):
+    def test_recurrence_id_google(self):
         ical = "test/test_data/recurrenceid_google.ics"
         start = date(2021, 1, 1)
         end = date(2021, 12, 31)
@@ -418,14 +418,72 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertEqual(len(evs), 4, "4 events in total")
 
+    def test_recurrence_with_modified_event(self):
+        tz = gettz("Europe/Berlin")
+
+        ical = "test/test_data/recurring_event_single_modified.ics"
+        start = date(2022, 1, 3)
+        end = date(2022, 1, 23)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        evs.sort()
+
+        self.assertEqual(len(evs), 6, "6 evens in total")
+
+        ev1 = evs[1]
+        self.assertEqual(ev1.summary, "A", "recurring event instance")
+        self.assertEqual(
+            ev1.start,
+            datetime(2022, 1, 7, 7, 0, 0, tzinfo=tz),
+            "recurring event instance start",
+        )
+        self.assertEqual(
+            ev1.end,
+            datetime(2022, 1, 7, 8, 0, 0, tzinfo=tz),
+            "recurring event instance end",
+        )
+
+        ev2 = evs[2]
+        self.assertEqual(ev2.summary, "B", "modified event")
+        self.assertEqual(
+            ev2.start, datetime(2022, 1, 13, 7, 0, 0, tzinfo=tz), "modified event start"
+        )
+        self.assertEqual(
+            ev2.end, datetime(2022, 1, 13, 7, 30, 0, tzinfo=tz), "modified event end"
+        )
+
+        ev4 = evs[4]
+        self.assertEqual(ev4.summary, "A", "recurring event instance")
+        self.assertEqual(
+            ev4.start,
+            datetime(2022, 1, 20, 7, 0, 0, tzinfo=tz),
+            "recurring event instance start",
+        )
+        self.assertEqual(
+            ev4.end,
+            datetime(2022, 1, 20, 8, 0, 0, tzinfo=tz),
+            "recurring event instance end",
+        )
+
     def test_cest(self):
         ical = "test/test_data/cest.ics"
         start = date(2021, 1, 1)
         end = date(2021, 12, 31)
 
         evs = icalevents.events(file=ical, start=start, end=end)
+        evs.sort()
 
-        self.assertEqual(len(evs), 115, "4 events in total")
+        expected_events_file = "test/test_data/cest.ics_2021_01_01-2021-12-31"
+
+        with open(expected_events_file, "r") as f:
+            for i, (line, ev) in enumerate(zip(f, evs)):
+                self.assertEqual(
+                    line,
+                    f"{ev.uid} {ev.summary} {ev.start} {ev.end}\n",
+                    f"event {i} doesn't match anymore",
+                )
+
+        self.assertEqual(len(evs), 116, "4 events in total")
 
     def test_transparent(self):
         ical = "test/test_data/transparent.ics"
