@@ -425,7 +425,7 @@ class ICalEventsTests(unittest.TestCase):
 
         evs = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(len(evs), 115, "4 events in total")
+        self.assertEqual(len(evs), 116, "4 events in total")
 
     def test_transparent(self):
         ical = "test/test_data/transparent.ics"
@@ -450,3 +450,32 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(ev3.status, "CANCELLED")
         self.assertEqual(ev4.status, "CANCELLED")
         self.assertEqual(ev5.status, None)
+
+    def test_recurr_id_dtstart_missmatch(self):
+        ical = "test/test_data/recurr_id_dtstart_missmatch.ics"
+        tz = gettz("America/New_York")
+        start = date(2022, 3, 1)
+        end = date(2022, 6, 30)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        # input file isn't in sorted order, so dates are out of order
+        evs.sort(key=lambda ev: (ev.start, ev.sequence))
+
+        self.assertEqual(len(evs), 4)
+
+        # time didn't change, but description/summary did
+        self.assertEqual(evs[0].start, datetime(2022, 3, 9, 13, 00, 0, tzinfo=tz))
+        self.assertEqual(evs[0].summary, "Recurring Event - Exception 1")
+
+        # time/description/summary changed
+        self.assertEqual(evs[1].start, datetime(2022, 4, 13, 10, 30, 0, tzinfo=tz))
+        self.assertEqual(evs[1].summary, "Recurring Event - Exception 2")
+
+        # normally scheduled event
+        self.assertEqual(evs[2].start, datetime(2022, 5, 11, 13, 00, 0, tzinfo=tz))
+        self.assertEqual(evs[2].summary, "Recurring Event")
+
+        # normally scheduled event
+        self.assertEqual(evs[3].start, datetime(2022, 6, 8, 13, 00, 0, tzinfo=tz))
+        self.assertEqual(evs[3].summary, "Recurring Event")
