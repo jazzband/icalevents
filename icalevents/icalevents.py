@@ -27,8 +27,8 @@ def events(
     :param url: iCal URL
     :param file: iCal file path
     :param string_content: iCal content as string
-    :param start: start date (see dateutils.date)
-    :param end: end date (see dateutils.date)
+    :param start: start date (see datetime.date)
+    :param end: end date (see datetime.date)
     :param fix_apple: fix known Apple iCal issues
     :return: events as list of dictionaries
     """
