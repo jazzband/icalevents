@@ -407,7 +407,7 @@ class ICalEventsTests(unittest.TestCase):
 
         evs = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(len(evs), 41, "41 events in total - one was moved")
+        self.assertEqual(len(evs), 42, "42 events in total - one was moved")
 
     def test_recurence_id_google(self):
         ical = "test/test_data/recurrenceid_google.ics"
@@ -420,12 +420,71 @@ class ICalEventsTests(unittest.TestCase):
 
     def test_cest(self):
         ical = "test/test_data/cest.ics"
-        start = date(2021, 1, 1)
-        end = date(2021, 12, 31)
+        start = date(2010, 1, 1)
+        end = date(2023, 12, 31)
 
         evs = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(len(evs), 115, "4 events in total")
+        self.assertEqual(
+            len(evs), 239, "239 events in total"
+        )  # 102 events / 91 + 11 recurring
+
+    def test_cest_2021_03(self):
+        ical = "test/test_data/cest.ics"
+        start = date(2021, 3, 1)
+        end = date(2021, 3, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(len(evs), 30, "30 in march")
+
+    def test_cest_2021_04(self):
+        ical = "test/test_data/cest.ics"
+        start = date(2021, 4, 1)
+        end = date(2021, 5, 1)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(len(evs), 27, "27 in april")
+
+    def test_cest_2021_05(self):
+        ical = "test/test_data/cest.ics"
+        start = date(2021, 5, 1)
+        end = date(2021, 6, 1)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(len(evs), 20, "20 in mai")
+
+    def test_cest_1(self):
+        ical = "test/test_data/cest_every_day_for_one_year.ics"
+        start = date(2020, 1, 1)
+        end = date(2024, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(
+            len(evs),
+            366,
+            "366 events in total - one year + 1 (2021-11-11 to 2022-11-11)",
+        )
+
+    def test_cest_2(self):
+        ical = "test/test_data/cest_every_second_day_for_one_year.ics"
+        start = date(2020, 1, 1)
+        end = date(2024, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(
+            len(evs), 183, "183 events in total - one year (2021-11-11 to 2022-11-11)"
+        )
+
+    def test_cest_3(self):
+        ical = "test/test_data/cest_with_deleted.ics"
+        start = date(2020, 1, 1)
+        end = date(2024, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(
+            len(evs), 3, "3 events in total - 5 events in rrule but 2 deleted"
+        )
 
     def test_transparent(self):
         ical = "test/test_data/transparent.ics"
@@ -450,3 +509,101 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(ev3.status, "CANCELLED")
         self.assertEqual(ev4.status, "CANCELLED")
         self.assertEqual(ev5.status, None)
+
+    def test_recurrence_tz(self):
+        ical = "test/test_data/recurrence_tz.ics"
+        start = datetime(2021, 10, 24, 00, 0, 0, tzinfo=gettz("Australia/Sydney"))
+        end = datetime(2021, 10, 26, 00, 0, 0, tzinfo=gettz("Australia/Sydney"))
+
+        [e1] = icalevents.events(file=ical, start=start, end=end)
+        expect = datetime(2021, 10, 24, 9, 0, 0, tzinfo=gettz("Australia/Sydney"))
+        self.assertEqual(
+            e1.start, expect, "Recurring event matches event in ical (Issue #89)"
+        )
+
+    def test_attenddees_have_params(self):
+        ical = "test/test_data/response.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(e1.attendee.params["PARTSTAT"], "DECLINED", "add paarams")
+        self.assertEqual(
+            e1.attendee, "mailto:calendar@gmail.com", "still is like a string"
+        )
+
+    def test_attenddees_can_be_multiple(self):
+        ical = "test/test_data/multi_attendee_response.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(e1.attendee[0].params["PARTSTAT"], "DECLINED", "add paarams")
+        self.assertEqual(
+            e1.attendee[0], "mailto:calendar@gmail.com", "we have a list of attendees"
+        )
+        self.assertEqual(
+            e1.attendee[1],
+            "mailto:calendar@microsoft.com",
+            "we have more than one attendee",
+        )
+
+    def test_floating(self):
+        ical = "test/test_data/floating.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1, e2] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(e1.transparent, True, "respect transparency")
+        self.assertEqual(e1.start.hour, 0, "check start of the day")
+        self.assertEqual(e1.end.hour, 0, "check end of the day")
+        self.assertEqual(e1.floating, True, "respect floating time")
+        self.assertEqual(e1.start.tzinfo, UTC, "check tz as default utc")
+
+        self.assertEqual(e2.transparent, False, "respect transparency")
+        self.assertEqual(e2.start.hour, 6, "check start of the day")
+        self.assertEqual(e2.end.hour, 14, "check end of the day")
+        self.assertEqual(e2.floating, False, "respect floating time")
+        self.assertEqual(e2.start.tzinfo, UTC, "check tz as default utc")
+
+    def test_non_floating(self):
+        ical = "test/test_data/non_floating.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1, e2] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertEqual(e1.transparent, True, "respect transparency")
+        self.assertEqual(e1.start.hour, 0, "check start of the day")
+        self.assertEqual(e1.end.hour, 0, "check end of the day")
+        self.assertEqual(e1.floating, False, "respect floating time")
+        self.assertEqual(
+            e1.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
+        )
+
+        self.assertEqual(e2.transparent, False, "respect transparency")
+        self.assertEqual(e2.start.hour, 8, "check start of the day")
+        self.assertEqual(e2.end.hour, 16, "check end of the day")
+        self.assertEqual(e2.floating, False, "respect floating time")
+        self.assertEqual(
+            e1.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
+        )
+
+    def test_recurring_override(self):
+        ical = "test/test_data/recurring_override.ics"
+        start = date(2021, 11, 23)
+        end = date(2021, 11, 24)
+
+        [e0, e1, e2] = icalevents.events(file=ical, start=start, end=end)
+
+        # Here all dates are in utc because the .ics has two timezones and this causes a transformation
+        self.assertEqual(e0.start, datetime(2021, 11, 23, 9, 0, tzinfo=UTC))
+        self.assertEqual(e1.start, datetime(2021, 11, 23, 10, 45, tzinfo=UTC))
+        self.assertEqual(
+            e2.start,
+            datetime(2021, 11, 23, 13, 0, tzinfo=UTC),
+            "moved 1 hour from 12:00 to 13:00",
+        )
