@@ -50,7 +50,7 @@ def events(
 
     if found_events is not None:
         found_events.sort()
-    
+
     return found_events
 
 
