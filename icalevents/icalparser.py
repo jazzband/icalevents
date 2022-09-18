@@ -320,7 +320,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     :param start: start date for search, default today (in UTC format)
     :param end: end date for search (in UTC format)
     :param default_span: default query length (one week)
-    :return: events as list sorted by ascending time
+    :return: events as list
     """
     if not start:
         start = now()
@@ -474,7 +474,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
         ]:
             result.remove(event)
 
-    return result.sort()
+    return result
 
 
 def parse_rrule(component, tz=UTC):
