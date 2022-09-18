@@ -48,12 +48,15 @@ def events(
 
     found_events += parse_events(content, start=start, end=end)
 
+    if found_events is not None:
+        found_events.sort()
+    
     return found_events
 
 
 def request_data(key, url, file, string_content, start, end, fix_apple):
     """
-    Request data, update local data cache and remove this Thread form queue.
+    Request data, update local data cache and remove this Thread from queue.
 
     :param key: key for data source to get result later
     :param url: iCal URL
