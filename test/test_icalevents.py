@@ -58,21 +58,21 @@ class ICalEventsTests(unittest.TestCase):
         start = date(2018, 10, 15)
         end = date(2018, 11, 15)
 
-        evs = icalevents.events(file=ical, start=start, end=end)
+        evs = icalevents.events(file=ical, start=start, end=end, sort=False)
 
         e1 = evs[1]
         self.assertEqual(e1.start.hour, 10, "check time with DST")
         self.assertEqual(
-            e1.start.tzinfo.utcoffset(e1.start),
             timedelta(seconds=7200),
+            e1.start.tzinfo.utcoffset(e1.start),
             "check UTC offset with DST",
         )
 
         e2 = evs[2]
         self.assertEqual(e2.start.hour, 10, "check time without DST")
         self.assertEqual(
-            e2.start.tzinfo.utcoffset(e2.start),
             timedelta(seconds=3600),
+            e2.start.tzinfo.utcoffset(e2.start),
             "check UTC offset without DST",
         )
 
@@ -147,14 +147,14 @@ class ICalEventsTests(unittest.TestCase):
         end = date(2022, 1, 1)
 
         evs = icalevents.events(file=ical, start=start, end=end)
-        ev_2 = evs[2]
+        ev = evs[0]
 
         self.assertEqual(len(evs), 3)
         self.assertEqual(
-            ev_2.start, datetime(2021, 3, 24, 00, 0, 0, tzinfo=gettz("Europe/Zurich"))
+            ev.start, datetime(2021, 3, 24, 00, 0, 0, tzinfo=gettz("Europe/Zurich"))
         )
-        self.assertEqual(ev_2.all_day, True, "All day event")
-        self.assertEqual(ev_2.summary, "Busy")
+        self.assertEqual(ev.all_day, True, "All day event")
+        self.assertEqual(ev.summary, "Busy")
 
     def test_events_rrule_until_only_date(self):
         ical = "test/test_data/rrule_until_only_date.ics"
@@ -557,16 +557,16 @@ class ICalEventsTests(unittest.TestCase):
 
         [e1, e2] = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(e1.transparent, True, "respect transparency")
-        self.assertEqual(e1.start.hour, 0, "check start of the day")
-        self.assertEqual(e1.end.hour, 0, "check end of the day")
-        self.assertEqual(e1.floating, True, "respect floating time")
+        self.assertEqual(e1.transparent, False, "respect transparency")
+        self.assertEqual(e1.start.hour, 6, "check start of the day")
+        self.assertEqual(e1.end.hour, 14, "check end of the day")
+        self.assertEqual(e1.floating, False, "respect floating time")
         self.assertEqual(e1.start.tzinfo, UTC, "check tz as default utc")
 
-        self.assertEqual(e2.transparent, False, "respect transparency")
-        self.assertEqual(e2.start.hour, 6, "check start of the day")
-        self.assertEqual(e2.end.hour, 14, "check end of the day")
-        self.assertEqual(e2.floating, False, "respect floating time")
+        self.assertEqual(e2.transparent, True, "respect transparency")
+        self.assertEqual(e2.start.hour, 0, "check start of the day")
+        self.assertEqual(e2.end.hour, 0, "check end of the day")
+        self.assertEqual(e2.floating, True, "respect floating time")
         self.assertEqual(e2.start.tzinfo, UTC, "check tz as default utc")
 
     def test_non_floating(self):
@@ -576,20 +576,20 @@ class ICalEventsTests(unittest.TestCase):
 
         [e1, e2] = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(e1.transparent, True, "respect transparency")
-        self.assertEqual(e1.start.hour, 0, "check start of the day")
-        self.assertEqual(e1.end.hour, 0, "check end of the day")
+        self.assertEqual(e1.transparent, False, "respect transparency")
+        self.assertEqual(e1.start.hour, 8, "check start of the day")
+        self.assertEqual(e1.end.hour, 16, "check end of the day")
         self.assertEqual(e1.floating, False, "respect floating time")
         self.assertEqual(
             e1.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
         )
 
-        self.assertEqual(e2.transparent, False, "respect transparency")
-        self.assertEqual(e2.start.hour, 8, "check start of the day")
-        self.assertEqual(e2.end.hour, 16, "check end of the day")
+        self.assertEqual(e2.transparent, True, "respect transparency")
+        self.assertEqual(e2.start.hour, 0, "check start of the day")
+        self.assertEqual(e2.end.hour, 0, "check end of the day")
         self.assertEqual(e2.floating, False, "respect floating time")
         self.assertEqual(
-            e1.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
+            e2.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
         )
 
     def test_recurring_override(self):

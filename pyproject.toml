@@ -2,7 +2,8 @@
 name = "icalevents"
 version = "0.1.26"
 description = "Simple Python 3 library to download, parse and query iCal sources."
-authors = ["Martin Eigenmann <github@eigenmannmartin.ch>", "Thomas Irgang <thomas@irgang.eu>", "Alexander Hultnér <ahultner+github@gmail.com>"]
+authors = ["Martin Eigenmann <github@eigenmannmartin.ch>", "Thomas Irgang <thomas@irgang.eu>",
+    "Alexander Hultnér <ahultner+github@gmail.com>"]
 license = "MIT Licence"
 readme = "README.md"
 
@@ -18,7 +19,7 @@ DateTime = "==4.3"
 coverage = "==6.0.1"
 codecov = "==2.1.12"
 pytest = "==6.2.5"
-black = "==21.9b0"
+black = "==22.3.0"
 flake8 = "==5.0.4"
 
 [build-system]
