@@ -18,8 +18,8 @@ DateTime = "==4.3"
 coverage = "==6.0.1"
 codecov = "==2.1.12"
 pytest = "==6.2.5"
-black = "===21.9b0"
-flake8 = "===3.7.9"
+black = "==21.9b0"
+flake8 = "==5.0.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
