@@ -1,6 +1,6 @@
 from threading import Lock, Thread
 
-from .icalparser import parse_events
+from .icalparser import parse_events, Event
 from .icaldownload import ICalDownload
 
 
@@ -21,7 +21,7 @@ def events(
     fix_apple=False,
     http=None,
     sort=True,
-):
+) -> list[Event]:
     """
     Get all events form the given iCal URL occurring in the given time range.
 
@@ -31,8 +31,9 @@ def events(
     :param start: start date (see dateutils.date)
     :param end: end date (see dateutils.date)
     :param fix_apple: fix known Apple iCal issues
-    :return: events as list of dictionaries
     :sort: sorts events by start time
+
+    :return: events
     """
     found_events = []
 
