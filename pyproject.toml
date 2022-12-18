@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "icalevents"
-version = "0.1.26"
+version = "0.1.27"
 description = "Simple Python 3 library to download, parse and query iCal sources."
 authors = ["Martin Eigenmann <github@eigenmannmartin.ch>", "Thomas Irgang <thomas@irgang.eu>",
     "Alexander Hultnér <ahultner+github@gmail.com>"]

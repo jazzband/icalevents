@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from setuptools import setup
 
-version = "0.1.26"
+version = "0.1.27"
 
 setup(
     name="icalevents",
