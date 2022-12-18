@@ -340,7 +340,9 @@ def parse_events(
             # Deal with the fact that sometimes it's a list and
             # sometimes it's a singleton
             exlist = []
-            if isinstance(component["EXDATE"], list):
+            if isinstance(component["EXDATE"], vDDDLists):
+                exlist = component["EXDATE"].dts
+            elif isinstance(component["EXDATE"], list):
                 exlist = component["EXDATE"]
             else:
                 exlist.append(component["EXDATE"])
@@ -487,13 +489,29 @@ def parse_rrule(component):
 
     def conform_until(until, dtstart):
         if type(dtstart) is datetime:
-            return (
+            # If we have timezone defined adjust for daylight saving time
+            if type(until) is datetime:
+                until_offset = (
+                    until.astimezone(dtstart.tzinfo).utcoffset()
+                    if until.tzinfo is not None and dtstart.tzinfo is not None
+                    else None
+                )
+                if until_offset is not None:
+                    return until + abs(until_offset)
+
+            offset = dtstart.tzinfo.utcoffset(dtstart) if dtstart.tzinfo else None
+            normalized_until = (
                 until.astimezone(UTC)
                 if type(until) is datetime
                 else datetime(
                     year=until.year, month=until.month, day=until.day, tzinfo=UTC
                 )
-            ) + dtstart.tzinfo.utcoffset(dtstart)
+            )
+            if offset:
+                return normalized_until + offset
+
+            return normalized_until
+
         elif type(dtstart) is date:
             return (
                 until.date() + timedelta(days=1) if type(until) is datetime else until
