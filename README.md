@@ -2,7 +2,7 @@
 
 Simple Python 3 library to download, parse and query iCal sources.
 
-[![PyPI version](https://badge.fury.io/py/icalevnt.svg)](https://badge.fury.io/py/icalevnt)[![Jazzband](https://jazzband.co/static/img/badge.svg)](https://jazzband.co/)
+[![PyPI version](https://badge.fury.io/py/icalevents.svg)](https://badge.fury.io/py/icalevents)[![Jazzband](https://jazzband.co/static/img/badge.svg)](https://jazzband.co/)
 
 ## Build info
 
