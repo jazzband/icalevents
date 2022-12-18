@@ -20,7 +20,9 @@ def events(
     end=None,
     fix_apple=False,
     http=None,
-    sort=True,
+    tzinfo=None,
+    sort=None,
+    strict=False,
 ) -> list[Event]:
     """
     Get all events form the given iCal URL occurring in the given time range.
@@ -31,9 +33,12 @@ def events(
     :param start: start date (see dateutils.date)
     :param end: end date (see dateutils.date)
     :param fix_apple: fix known Apple iCal issues
-    :sort: sorts events by start time
+    :param tzinfo: return values in specified tz
+    :param sort: sort return values
+    :param strict: return dates, datetimes and datetime with timezones as specified in ical
+    :sort sorts events by start time
 
-    :return: events
+    :return events
     """
     found_events = []
 
@@ -49,7 +54,9 @@ def events(
     if not content and string_content:
         content = ical_download.data_from_string(string_content, apple_fix=fix_apple)
 
-    found_events += parse_events(content, start=start, end=end)
+    found_events += parse_events(
+        content, start=start, end=end, tzinfo=tzinfo, sort=sort, strict=strict
+    )
 
     if found_events is not None and sort is True:
         found_events.sort()

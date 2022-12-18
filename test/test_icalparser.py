@@ -78,36 +78,6 @@ class ICalParserTests(unittest.TestCase):
     def test_event_order(self):
         self.assertTrue(self.eventA > self.eventB, "order of events")
 
-    def test_normalize(self):
-        dt = date(year=2016, month=11, day=13)
-        norm = icalevents.icalparser.normalize(dt)
-
-        self.assertTrue(type(norm) is datetime, "type is datetime")
-        self.assertEqual(2016, norm.year, "year")
-        self.assertEqual(11, norm.month, "month")
-        self.assertEqual(13, norm.day, "day")
-        self.assertEqual(0, norm.hour, "hour")
-        self.assertEqual(0, norm.minute, "minute")
-        self.assertEqual(0, norm.second, "second")
-        self.assertEqual(0, norm.microsecond, "microsecond")
-        self.assertEqual(UTC, norm.tzinfo, "timezone")
-
-        dt = datetime(year=2016, month=11, day=13, hour=1, minute=2, second=3)
-        norm = icalevents.icalparser.normalize(dt)
-
-        self.assertTrue(type(norm) is datetime, "type is datetime")
-        self.assertEqual(2016, norm.year, "year")
-        self.assertEqual(11, norm.month, "month")
-        self.assertEqual(13, norm.day, "day")
-        self.assertEqual(1, norm.hour, "hour")
-        self.assertEqual(2, norm.minute, "minute")
-        self.assertEqual(3, norm.second, "second")
-        self.assertEqual(0, norm.microsecond, "microsecond")
-        self.assertEqual(UTC, norm.tzinfo, "timezone")
-
-        with self.assertRaises(ValueError, msg="type check effective"):
-            icalevents.icalparser.normalize(None)
-
     def test_attendee(self):
         self.assertIsInstance(self.eventA.attendee, str)
         self.assertIsInstance(self.eventB.attendee, list)
@@ -119,4 +89,4 @@ class ICalParserTests(unittest.TestCase):
     def test_str(self):
         self.eventA.start = datetime(year=2017, month=2, day=3, hour=12, minute=5)
         self.eventA.end = datetime(year=2017, month=2, day=3, hour=15, minute=5)
-        self.assertEqual("2017-02-03 12:05:00+00:00: Event A (ended)", str(self.eventA))
+        self.assertEqual("2017-02-03 12:05:00: Event A (3:00:00)", str(self.eventA))

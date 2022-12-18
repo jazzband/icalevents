@@ -146,7 +146,7 @@ class ICalEventsTests(unittest.TestCase):
         start = date(2021, 1, 1)
         end = date(2022, 1, 1)
 
-        evs = icalevents.events(file=ical, start=start, end=end)
+        evs = icalevents.events(file=ical, start=start, end=end, sort=True)
         ev = evs[0]
 
         self.assertEqual(len(evs), 3)
@@ -288,47 +288,6 @@ class ICalEventsTests(unittest.TestCase):
         self.assertTrue(icalevents.all_done(key), "request is finished")
         self.assertEqual(len(icalevents.latest_events(key)), 2, "two events are found")
 
-    def test_event_str(self):
-        ical = "test/test_data/duration.ics"
-        start = date(2018, 1, 1)
-        end = date(2018, 2, 1)
-        n = datetime.now(UTC)
-        m = relativedelta(hour=0, minute=0, second=0, microsecond=0)
-
-        evs = icalevents.events(file=ical, start=start, end=end)
-
-        e1 = evs[0]
-        self.assertIsNotNone(
-            search(r"ended", str(e1.copy_to(n - relativedelta(days=5) + m))),
-            "stringify past event",
-        )
-        self.assertIsNotNone(
-            search(r"today", str(e1.copy_to(n - relativedelta(days=1) + m))),
-            "stringify ongoing event",
-        )
-        self.assertIsNotNone(
-            search(r"days left", str(e1.copy_to(n + relativedelta(days=3) + m))),
-            "stringify future event",
-        )
-
-        e2 = evs[1]
-        self.assertIsNotNone(
-            search(r"ended", str(e2.copy_to(n - relativedelta(hours=5)))),
-            "stringify past event",
-        )
-        self.assertIsNotNone(
-            search(r"now", str(e2.copy_to(n - relativedelta(hours=1)))),
-            "stringify ongoing event",
-        )
-        self.assertIsNotNone(
-            search(r"hours left", str(e2.copy_to(n + relativedelta(hours=3)))),
-            "stringify future event",
-        )
-        self.assertIsNotNone(
-            search(r"days left", str(e2.copy_to(n + relativedelta(days=3)))),
-            "stringify future event",
-        )
-
     def test_events_no_description(self):
         ical = "test/test_data/no_description.ics"
         start = date(2018, 10, 15)
@@ -405,9 +364,19 @@ class ICalEventsTests(unittest.TestCase):
         start = date(2021, 1, 1)
         end = date(2021, 12, 31)
 
-        evs = icalevents.events(file=ical, start=start, end=end)
+        evs = icalevents.events(file=ical, start=start, end=end, sort=True)
 
         self.assertEqual(len(evs), 42, "42 events in total - one was moved")
+
+    def test_recurence_id_ms_moved(self):
+        ical = "test/test_data/recurrenceid_ms.ics"
+        start = date(2021, 4, 8)
+        end = date(2021, 4, 10)
+
+        evs = icalevents.events(file=ical, start=start, end=end, sort=True)
+        self.assertEqual(evs[0].start.day, 10)
+
+        self.assertEqual(len(evs), 1, "only one event - it was moved")
 
     def test_recurence_id_google(self):
         ical = "test/test_data/recurrenceid_google.ics"
@@ -425,9 +394,15 @@ class ICalEventsTests(unittest.TestCase):
 
         evs = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(
-            len(evs), 239, "239 events in total"
-        )  # 102 events / 91 + 11 recurring
+        self.assertEqual(len(evs), 239, "239 events in total")
+
+    def test_cest_2021_02(self):
+        ical = "test/test_data/cest.ics"
+        start = date(2021, 2, 1)
+        end = date(2021, 2, 28)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(len(evs), 17, "17 in february")
 
     def test_cest_2021_03(self):
         ical = "test/test_data/cest.ics"
@@ -442,16 +417,114 @@ class ICalEventsTests(unittest.TestCase):
         start = date(2021, 4, 1)
         end = date(2021, 5, 1)
 
-        evs = icalevents.events(file=ical, start=start, end=end)
-        self.assertEqual(len(evs), 27, "27 in april")
+        tz = gettz("Europe/Zurich")
+        events = icalevents.events(
+            file=ical, start=start, end=end, tzinfo=tz, sort=True, strict=True
+        )
+
+        times = [
+            ((2021, 4, 1, 14, 0), (2021, 4, 1, 14, 30)),
+            ((2021, 4, 1, 15, 30), (2021, 4, 1, 17, 0)),
+            ((2021, 4, 2), (2021, 4, 3)),
+            ((2021, 4, 5, 16, 00), (2021, 4, 5, 17, 0)),
+            ((2021, 4, 7), (2021, 4, 8)),
+            ((2021, 4, 8, 11, 0), (2021, 4, 8, 12, 0)),
+            ((2021, 4, 8, 14, 30), (2021, 4, 8, 15, 0)),
+            ((2021, 4, 8, 15, 0), (2021, 4, 8, 15, 30)),
+            ((2021, 4, 9), (2021, 4, 10)),
+            # ((2021, 4, 9), (2021, 4, 10)), # Google said this should exist, microsoft disagrees
+            ((2021, 4, 12, 11, 0), (2021, 4, 12, 11, 30)),
+            ((2021, 4, 12, 16, 0), (2021, 4, 12, 17, 0)),
+            ((2021, 4, 14), (2021, 4, 15)),
+            ((2021, 4, 15, 12, 0), (2021, 4, 15, 13, 0)),
+            ((2021, 4, 15, 15, 0), (2021, 4, 15, 15, 30)),
+            ((2021, 4, 16), (2021, 4, 17)),
+            ((2021, 4, 19, 16, 0), (2021, 4, 19, 17, 0)),
+            ((2021, 4, 21), (2021, 4, 22)),
+            ((2021, 4, 22, 11, 0), (2021, 4, 22, 12, 0)),
+            ((2021, 4, 22, 14, 45), (2021, 4, 22, 15, 15)),
+            ((2021, 4, 23), (2021, 4, 24)),
+            ((2021, 4, 26, 16, 0), (2021, 4, 26, 17, 0)),
+            ((2021, 4, 28), (2021, 4, 29)),
+            ((2021, 4, 29, 9, 0), (2021, 4, 29, 11, 0)),
+            ((2021, 4, 29, 11, 0), (2021, 4, 29, 11, 30)),
+            ((2021, 4, 29, 14, 15), (2021, 4, 29, 15, 00)),
+            ((2021, 4, 29, 15, 0), (2021, 4, 29, 15, 30)),
+            ((2021, 4, 30), (2021, 5, 1)),
+        ]
+
+        for index, time in enumerate(times):
+            self.assertEqual(
+                events[index].start,
+                date(*time[0]) if len(time[0]) == 3 else datetime(*time[0], tzinfo=tz),
+            )
+            self.assertEqual(
+                events[index].end,
+                date(*time[1]) if len(time[1]) == 3 else datetime(*time[1], tzinfo=tz),
+            )
+
+        self.assertEqual(len(events), len(times))
 
     def test_cest_2021_05(self):
         ical = "test/test_data/cest.ics"
         start = date(2021, 5, 1)
         end = date(2021, 6, 1)
 
+        tz = gettz("Europe/Zurich")
+        events = icalevents.events(
+            file=ical, start=start, end=end, tzinfo=tz, sort=True, strict=True
+        )
+
+        times = [
+            ((2021, 5, 3, 16, 0), (2021, 5, 3, 17, 0)),
+            ((2021, 5, 5), (2021, 5, 6)),
+            ((2021, 5, 6, 11, 0), (2021, 5, 6, 12, 0)),
+            ((2021, 5, 6, 15, 0), (2021, 5, 6, 15, 30)),
+            ((2021, 5, 7), (2021, 5, 8)),
+            ((2021, 5, 10, 16, 0), (2021, 5, 10, 17, 0)),
+            ((2021, 5, 12), (2021, 5, 13)),
+            ((2021, 5, 13, 15, 0), (2021, 5, 13, 15, 30)),
+            ((2021, 5, 14), (2021, 5, 15)),
+            ((2021, 5, 17, 16, 0), (2021, 5, 17, 17, 0)),
+            ((2021, 5, 19), (2021, 5, 20)),
+            ((2021, 5, 20, 11, 0), (2021, 5, 20, 12, 0)),
+            ((2021, 5, 20, 12, 0), (2021, 5, 20, 13, 0)),
+            ((2021, 5, 20, 15, 0), (2021, 5, 20, 15, 30)),
+            ((2021, 5, 21), (2021, 5, 22)),
+            ((2021, 5, 24, 16, 0), (2021, 5, 24, 17, 0)),
+            ((2021, 5, 26), (2021, 5, 27)),
+            ((2021, 5, 27, 15, 0), (2021, 5, 27, 15, 30)),
+            ((2021, 5, 28), (2021, 5, 29)),
+            ((2021, 5, 31, 16, 0), (2021, 5, 31, 17, 0)),
+        ]
+
+        for index, time in enumerate(times):
+            self.assertEqual(
+                events[index].start,
+                date(*time[0]) if len(time[0]) == 3 else datetime(*time[0], tzinfo=tz),
+            )
+            self.assertEqual(
+                events[index].end,
+                date(*time[1]) if len(time[1]) == 3 else datetime(*time[1], tzinfo=tz),
+            )
+
+        self.assertEqual(len(events), len(times))
+
+    def test_cest_2021_06(self):
+        ical = "test/test_data/cest.ics"
+        start = date(2021, 6, 1)
+        end = date(2021, 6, 30)
+
         evs = icalevents.events(file=ical, start=start, end=end)
-        self.assertEqual(len(evs), 20, "20 in mai")
+        self.assertEqual(len(evs), 11, "11 in june")
+
+    def test_cest_2021_07(self):
+        ical = "test/test_data/cest.ics"
+        start = date(2021, 7, 1)
+        end = date(2021, 7, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        self.assertEqual(len(evs), 1, "1 in july")
 
     def test_cest_1(self):
         ical = "test/test_data/cest_every_day_for_one_year.ics"
@@ -607,3 +680,118 @@ class ICalEventsTests(unittest.TestCase):
             datetime(2021, 11, 23, 13, 0, tzinfo=UTC),
             "moved 1 hour from 12:00 to 13:00",
         )
+
+    def test_recurring_tz_passover_fall(self):
+        ical = "test/test_data/recurring_override.ics"
+        start = date(2021, 8, 30)
+        end = date(2021, 9, 18)
+
+        tz = gettz("Europe/Zurich")
+        events = icalevents.events(
+            file=ical, start=start, end=end, tzinfo=tz, sort=True, strict=True
+        )
+
+        times = [
+            ((2021, 8, 30, 8, 0), (2021, 8, 30, 17, 0)),
+            ((2021, 8, 30, 9, 30), (2021, 8, 30, 10, 0)),
+            ((2021, 8, 31, 10, 0), (2021, 8, 31, 10, 30)),
+            ((2021, 8, 31, 10, 15), (2021, 8, 31, 10, 45)),
+            ((2021, 8, 31, 13, 15), (2021, 8, 31, 14, 0)),
+            ((2021, 9, 1, 9, 0), (2021, 9, 1, 10, 0)),
+            ((2021, 9, 1, 9, 30), (2021, 9, 1, 10, 0)),
+            ((2021, 9, 1, 12, 0), (2021, 9, 1, 13, 0)),
+            ((2021, 9, 2, 10, 0), (2021, 9, 2, 10, 30)),
+            ((2021, 9, 3, 8, 0), (2021, 9, 3, 8, 30)),
+            ((2021, 9, 3, 9, 0), (2021, 9, 3, 9, 30)),
+            ((2021, 9, 3, 9, 30), (2021, 9, 3, 10, 0)),
+            ((2021, 9, 3, 15, 30), (2021, 9, 3, 16, 0)),
+            ((2021, 9, 3, 17, 30), (2021, 9, 3, 19, 0)),
+            ((2021, 9, 6, 8, 0), (2021, 9, 6, 17, 0)),
+            ((2021, 9, 6, 9, 30), (2021, 9, 6, 10, 0)),
+            ((2021, 9, 7, 9, 0), (2021, 9, 7, 12, 0)),
+            ((2021, 9, 7, 9, 0), (2021, 9, 7, 12, 0)),
+            ((2021, 9, 7, 10, 0), (2021, 9, 7, 10, 30)),
+            ((2021, 9, 8, 9, 30), (2021, 9, 8, 10, 0)),
+            ((2021, 9, 8, 12, 0), (2021, 9, 8, 13, 0)),
+            ((2021, 9, 9), (2021, 9, 10)),
+            ((2021, 9, 9, 10, 0), (2021, 9, 9, 10, 30)),
+            ((2021, 9, 9, 11, 0), (2021, 9, 9, 12, 0)),
+            ((2021, 9, 10, 8, 0), (2021, 9, 10, 8, 30)),
+            ((2021, 9, 10, 9, 30), (2021, 9, 10, 10, 0)),
+            ((2021, 9, 10, 17, 30), (2021, 9, 10, 19, 0)),
+            ((2021, 9, 13, 9, 30), (2021, 9, 13, 10, 0)),
+            ((2021, 9, 14, 9, 0), (2021, 9, 14, 10, 0)),
+            ((2021, 9, 14, 10, 0), (2021, 9, 14, 10, 30)),
+            ((2021, 9, 14, 15, 0), (2021, 9, 14, 15, 30)),
+            ((2021, 9, 15, 9, 30), (2021, 9, 15, 10, 0)),
+            ((2021, 9, 16, 10, 0), (2021, 9, 16, 10, 30)),
+            ((2021, 9, 16), (2021, 9, 17)),
+            ((2021, 9, 17, 9, 30), (2021, 9, 17, 10, 0)),
+            ((2021, 9, 17, 17, 30), (2021, 9, 17, 19, 0)),
+        ]
+
+        for index, time in enumerate(times):
+            self.assertEqual(
+                events[index].start,
+                date(*time[0]) if len(time[0]) == 3 else datetime(*time[0], tzinfo=tz),
+            )
+            self.assertEqual(
+                events[index].end,
+                date(*time[1]) if len(time[1]) == 3 else datetime(*time[1], tzinfo=tz),
+            )
+
+        self.assertEqual(len(events), len(times))
+
+    def test_recurring_tz_passover_spring(self):
+        ical = "test/test_data/recurring_override.ics"
+        start = date(2022, 3, 6)
+        end = date(2022, 4, 10)
+
+        tz = gettz("Europe/Zurich")
+        events = icalevents.events(
+            file=ical, start=start, end=end, tzinfo=tz, sort=True, strict=True
+        )
+
+        times = [
+            ((2022, 3, 8, 11, 45), (2022, 3, 8, 12, 0)),
+            ((2022, 3, 10), (2022, 3, 11)),
+            ((2022, 3, 10, 11, 0), (2022, 3, 10, 12, 0)),
+            ((2022, 3, 15, 11, 45), (2022, 3, 15, 12, 0)),
+            ((2022, 3, 22, 11, 45), (2022, 3, 22, 12, 0)),
+            ((2022, 3, 22, 14, 00), (2022, 3, 22, 15, 0)),
+            ((2022, 3, 24), (2022, 3, 25)),
+            ((2022, 3, 29, 11, 45), (2022, 3, 29, 12, 0)),
+            ((2022, 4, 3, 8, 0), (2022, 4, 3, 8, 30)),
+            ((2022, 4, 7), (2022, 4, 8)),
+        ]
+
+        for index, time in enumerate(times):
+            self.assertEqual(
+                events[index].start,
+                date(*time[0]) if len(time[0]) == 3 else datetime(*time[0], tzinfo=tz),
+            )
+            self.assertEqual(
+                events[index].end,
+                date(*time[1]) if len(time[1]) == 3 else datetime(*time[1], tzinfo=tz),
+            )
+
+        self.assertEqual(len(events), len(times))
+
+    def test_multi_exdate_same_line(self):
+        ical = "test/test_data/multi_exdate_same_line_ms.ics"
+        tz = gettz("America/New_York")
+        start = date(2022, 3, 1)
+        end = date(2022, 5, 1)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+
+        # parsing starts at 2022-03-01
+        self.assertEqual(evs[0].start, datetime(2022, 3, 11, 11, 0, 0, tzinfo=tz))
+        # 2022-03-18 is excluded by EXDATE rule
+        self.assertEqual(evs[1].start, datetime(2022, 3, 25, 11, 0, 0, tzinfo=tz))
+        # 2022-04-01 is excluded by EXDATE rule
+        # 2022-04-08 is excluded by EXDATE rule
+        self.assertEqual(evs[2].start, datetime(2022, 4, 15, 11, 0, 0, tzinfo=tz))
+        self.assertEqual(evs[3].start, datetime(2022, 4, 22, 11, 0, 0, tzinfo=tz))
+        self.assertEqual(evs[4].start, datetime(2022, 4, 29, 11, 0, 0, tzinfo=tz))
+        # parsing stops at 2022-05-01
