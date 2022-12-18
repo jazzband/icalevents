@@ -271,8 +271,8 @@ def parse_events(
     Query the events occurring in a given time range.
 
     :param content: iCal URL/file content as String
-    :param start: start date for search, default today
-    :param end: end date for search
+    :param start: start date for search, default today (in UTC format)
+    :param end: end date for search (in UTC format)
     :param default_span: default query length (one week)
     :return: events as list
     """

@@ -1,6 +1,6 @@
 from threading import Lock, Thread
 
-from .icalparser import parse_events
+from .icalparser import parse_events, Event
 from .icaldownload import ICalDownload
 
 
@@ -23,7 +23,7 @@ def events(
     tzinfo=None,
     sort=None,
     strict=False,
-):
+) -> list[Event]:
     """
     Get all events form the given iCal URL occurring in the given time range.
 
@@ -36,7 +36,9 @@ def events(
     :param tzinfo: return values in specified tz
     :param sort: sort return values
     :param strict: return dates, datetimes and datetime with timezones as specified in ical
-    :return: events as list of dictionaries
+    :sort sorts events by start time
+
+    :return events
     """
     found_events = []
 
@@ -56,12 +58,15 @@ def events(
         content, start=start, end=end, tzinfo=tzinfo, sort=sort, strict=strict
     )
 
+    if found_events is not None and sort is True:
+        found_events.sort()
+
     return found_events
 
 
 def request_data(key, url, file, string_content, start, end, fix_apple):
     """
-    Request data, update local data cache and remove this Thread form queue.
+    Request data, update local data cache and remove this Thread from queue.
 
     :param key: key for data source to get result later
     :param url: iCal URL
