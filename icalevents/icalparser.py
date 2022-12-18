@@ -342,10 +342,8 @@ def parse_events(
             exlist = []
             if isinstance(component["EXDATE"], vDDDLists):
                 exlist = component["EXDATE"].dts
-            elif isinstance(component["EXDATE"], list):
-                exlist = component["EXDATE"]
             else:
-                exlist.append(component["EXDATE"])
+                exlist = component["EXDATE"]
             for ex in exlist:
                 exdate = ex.to_ical().decode("UTF-8")
                 exceptions[exdate[0:8]] = exdate
@@ -477,9 +475,6 @@ def parse_rrule(component):
     :return: extracted rrule or rruleset or None
     """
 
-    if not component.get("rrule"):
-        return None
-
     dtstart = component.get("dtstart").dt
 
     # component['rrule'] can be both a scalar and a list
@@ -491,31 +486,27 @@ def parse_rrule(component):
         if type(dtstart) is datetime:
             # If we have timezone defined adjust for daylight saving time
             if type(until) is datetime:
-                until_offset = (
-                    until.astimezone(dtstart.tzinfo).utcoffset()
-                    if until.tzinfo is not None and dtstart.tzinfo is not None
-                    else None
+                return until + abs(
+                    (
+                        until.astimezone(dtstart.tzinfo).utcoffset()
+                        if until.tzinfo is not None and dtstart.tzinfo is not None
+                        else None
+                    )
+                    or timedelta()
                 )
-                if until_offset is not None:
-                    return until + abs(until_offset)
 
-            offset = dtstart.tzinfo.utcoffset(dtstart) if dtstart.tzinfo else None
-            normalized_until = (
+            return (
                 until.astimezone(UTC)
                 if type(until) is datetime
                 else datetime(
                     year=until.year, month=until.month, day=until.day, tzinfo=UTC
                 )
+            ) + (
+                (dtstart.tzinfo.utcoffset(dtstart) if dtstart.tzinfo else None)
+                or timedelta()
             )
-            if offset:
-                return normalized_until + offset
 
-            return normalized_until
-
-        elif type(dtstart) is date:
-            return (
-                until.date() + timedelta(days=1) if type(until) is datetime else until
-            )
+        return until.date() + timedelta(days=1) if type(until) is datetime else until
 
     for index, rru in enumerate(rrules):
         if "UNTIL" in rru:
@@ -534,22 +525,16 @@ def parse_rrule(component):
         # Add exdates to the rruleset
         for exd in extract_exdates(component):
             if type(dtstart) is date:
-                if exd.tzinfo:
-                    rule.exdate(exd.replace(tzinfo=None))
-                    # rule.exdate(datetime(year=exd.year, month=exd.month, day=exd.day) + timedelta(days=1))
-                else:
-                    rule.exdate(exd)
+                rule.exdate(exd.replace(tzinfo=None))
             else:
                 rule.exdate(exd)
 
     # TODO: What about rdates and exrules?
     if component.get("exrule"):
-        # pass
-        print("exrule", component.get("exrule"))
+        pass
 
     if component.get("rdate"):
-        # pass
-        print("rdate", component.get("rdate"))
+        pass
 
     return rule
 
@@ -562,12 +547,12 @@ def extract_exdates(component):
     :return: list of exception dates
     """
     dates = []
-    if exd_prop := component.get("exdate"):
-        if isinstance(exd_prop, list):
-            for exd_list in exd_prop:
-                dates.extend(exd.dt for exd in exd_list.dts)
-        elif isinstance(exd_prop, vDDDLists):
-            dates.extend(exd.dt for exd in exd_prop.dts)
+    exd_prop = component.get("exdate")
+    if isinstance(exd_prop, list):
+        for exd_list in exd_prop:
+            dates.extend(exd.dt for exd in exd_list.dts)
+    else:  # it must be a vDDDLists
+        dates.extend(exd.dt for exd in exd_prop.dts)
 
     return dates
 
