@@ -1,6 +1,7 @@
 """
 Downloads an iCal url or reads an iCal file.
 """
+
 from httplib2 import Http
 import logging
 

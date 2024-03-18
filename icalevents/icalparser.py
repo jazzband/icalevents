@@ -1,6 +1,7 @@
 """
 Parse iCal data to Events.
 """
+
 # for UID generation
 from faulthandler import is_enabled
 from random import randint
