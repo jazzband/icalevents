@@ -332,7 +332,8 @@ def parse_events(
         )
 
         if exdate not in exceptions:
-            if component: event.component = component
+            if component:
+                event.component = component
             found.append(event)
 
     for component in calendar.walk():
@@ -381,7 +382,9 @@ def parse_events(
                         )
                     else:
                         ecopy = e.copy_to(dt.date() if type(s) is date else dt, e.uid)
-                    add_if_not_exception(ecopy, component if include_component else None)
+                    add_if_not_exception(
+                        ecopy, component if include_component else None
+                    )
 
             elif e.end >= f and e.start <= t:
                 add_if_not_exception(e, component if include_component else None)
