@@ -266,6 +266,7 @@ def parse_events(
     tzinfo=None,
     sort=False,
     strict=False,
+    include_component=False,
 ):
     """
     Query the events occurring in a given time range.
@@ -323,7 +324,7 @@ def parse_events(
 
     found = []
 
-    def add_if_not_exception(event):
+    def add_if_not_exception(event, component):
         exdate = "%04d%02d%02d" % (
             event.start.year,
             event.start.month,
@@ -331,6 +332,8 @@ def parse_events(
         )
 
         if exdate not in exceptions:
+            if component:
+                event.component = component
             found.append(event)
 
     for component in calendar.walk():
@@ -379,10 +382,12 @@ def parse_events(
                         )
                     else:
                         ecopy = e.copy_to(dt.date() if type(s) is date else dt, e.uid)
-                    add_if_not_exception(ecopy)
+                    add_if_not_exception(
+                        ecopy, component if include_component else None
+                    )
 
             elif e.end >= f and e.start <= t:
-                add_if_not_exception(e)
+                add_if_not_exception(e, component if include_component else None)
 
     result = found.copy()
 
