@@ -179,7 +179,10 @@ def create_event(component, utc_default):
     event.start = component.get("dtstart").dt
     # The RFC specifies that the TZID parameter must be specified for datetime or time
     # Otherwise we set a default timezone (if only one is set with VTIMEZONE) or utc
-    event.floating = type(component.get("dtstart").dt) == date and utc_default
+    event.floating = (
+        type(component.get("dtstart").dt) == date
+        or component.get("dtstart").dt.tzinfo is None
+    )
 
     if component.get("dtend"):
         event.end = component.get("dtend").dt
