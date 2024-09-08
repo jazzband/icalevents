@@ -861,3 +861,21 @@ class ICalEventsTests(unittest.TestCase):
             5,
             "starts at 5 utc summer time (+2:00)",
         )
+
+    def test_regression_repeating_events_raise_an_error(self):
+        ical = "test/test_data/recurrence_tzinfo.ics"
+        start = date(2023, 1, 1)
+        end = date(2024, 12, 31)
+
+        events = icalevents.events(file=ical, start=start, end=end, strict=True)
+
+        self.assertEqual(len(events), 6, "6 events")
+        self.assertEqual(events[0].start, date(2023, 11, 27), "first on 27. nov")
+        self.assertEqual(events[1].start, date(2023, 12, 4), "second event on 4. dec")
+        self.assertEqual(events[2].start, date(2023, 12, 11), "third event on 11. dec")
+        self.assertEqual(
+            events[3].start,
+            date(2024, 1, 1),
+            "fourth event on 1. jan - 18. and 25. dec are excluded",
+        )
+        self.assertEqual(events[4].start, date(2024, 1, 8), "fifth event on 8. jan")

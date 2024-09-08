@@ -362,10 +362,8 @@ def parse_events(
 
             # make rule.between happy and provide from, to points in time that have the same format as dtstart
             s = component["dtstart"].dt
-            if type(s) is date and not e.recurring:
-                f, t = date(start.year, start.month, start.day), date(
-                    end.year, end.month, end.day
-                )
+            if type(s) is date and e.recurring == False:
+                f, t = start, end
             elif type(s) is datetime and s.tzinfo:
                 f, t = datetime(
                     start.year, start.month, start.day, tzinfo=s.tzinfo
@@ -537,7 +535,12 @@ def parse_rrule(component):
         # Add exdates to the rruleset
         for exd in extract_exdates(component):
             if type(dtstart) is date:
-                rule.exdate(exd.replace(tzinfo=None))
+                if type(exd) is date:
+                    # Always convert exdates to datetimes because rrule.between does not like dates
+                    # https://github.com/dateutil/dateutil/issues/938
+                    rule.exdate(datetime.combine(exd, datetime.min.time()))
+                else:
+                    rule.exdate(exd.replace(tzinfo=None))
             else:
                 rule.exdate(exd)
 
