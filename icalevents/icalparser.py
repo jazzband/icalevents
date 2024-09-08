@@ -1,6 +1,7 @@
 """
 Parse iCal data to Events.
 """
+
 # for UID generation
 from faulthandler import is_enabled
 from random import randint
@@ -166,7 +167,7 @@ def encode(value: Optional[vText]) -> Optional[str]:
         return str(value.encode("utf-8"))
 
 
-def create_event(component, utc_default):
+def create_event(component, utc_default, strict):
     """
     Create an event from its iCal representation.
 
@@ -179,10 +180,16 @@ def create_event(component, utc_default):
     event.start = component.get("dtstart").dt
     # The RFC specifies that the TZID parameter must be specified for datetime or time
     # Otherwise we set a default timezone (if only one is set with VTIMEZONE) or utc
-    event.floating = (
-        type(component.get("dtstart").dt) == date
-        or component.get("dtstart").dt.tzinfo is None
-    )
+    if not strict:
+        event.floating = (
+            type(component.get("dtstart").dt) == date
+            or component.get("dtstart").dt.tzinfo is None
+        )
+    else:
+        event.floating = (
+            type(component.get("dtstart").dt) == datetime
+            and component.get("dtstart").dt.tzinfo is None
+        )
 
     if component.get("dtend"):
         event.end = component.get("dtend").dt
@@ -326,15 +333,14 @@ def parse_events(
 
     found = []
 
-    def add_if_not_exception(event):
+    def is_not_exception(date):
         exdate = "%04d%02d%02d" % (
-            event.start.year,
-            event.start.month,
-            event.start.day,
+            date.year,
+            date.month,
+            date.day,
         )
 
-        if exdate not in exceptions:
-            found.append(event)
+        return exdate not in exceptions
 
     for component in calendar.walk():
         exceptions = {}
@@ -352,7 +358,7 @@ def parse_events(
                 exceptions[exdate[0:8]] = exdate
 
         if component.name == "VEVENT":
-            e = create_event(component, utc_default)
+            e = create_event(component, utc_default, strict)
 
             # make rule.between happy and provide from, to points in time that have the same format as dtstart
             s = component["dtstart"].dt
@@ -375,25 +381,29 @@ def parse_events(
                     # Recompute the start time in the current timezone *on* the
                     # date of *this* occurrence. This handles the case where the
                     # recurrence has crossed over the daylight savings time boundary.
-                    if type(dt) is datetime and dt.tzinfo:
-                        dtstart = dt.replace(tzinfo=get_timezone(str(dt.tzinfo)))
-                        ecopy = e.copy_to(
-                            dtstart.date() if type(s) is date else dtstart, e.uid
-                        )
-                    else:
-                        ecopy = e.copy_to(dt.date() if type(s) is date else dt, e.uid)
-                    add_if_not_exception(ecopy)
+                    if is_not_exception(dt):
+                        if type(dt) is datetime and dt.tzinfo:
+                            ecopy = e.copy_to(
+                                dt.replace(tzinfo=get_timezone(str(dt.tzinfo))),
+                                e.uid,
+                            )
+                        else:
+                            ecopy = e.copy_to(
+                                dt.date() if type(s) is date else dt, e.uid
+                            )
+                        found.append(ecopy)
 
-            elif e.end >= f and e.start <= t:
-                add_if_not_exception(e)
+            elif e.end >= f and e.start <= t and is_not_exception(e.start):
+                found.append(e)
 
     result = found.copy()
 
     # Remove events that are replaced in ical
     for event in found:
-        if not event.recurrence_id and (event.uid, event.start) in [
-            (f.uid, f.recurrence_id) for f in found
-        ]:
+        if not event.recurrence_id and (
+            event.uid,
+            event.start,
+        ) in [(f.uid, f.recurrence_id) for f in found]:
             result.remove(event)
 
     # > Will be deprecated ========================
@@ -505,9 +515,8 @@ def parse_rrule(component):
                     year=until.year, month=until.month, day=until.day, tzinfo=UTC
                 )
             ) + (
-                (dtstart.tzinfo.utcoffset(dtstart) if dtstart.tzinfo else None)
-                or timedelta()
-            )
+                dtstart.tzinfo.utcoffset(dtstart) if dtstart.tzinfo else None
+            ) or timedelta()
 
         return until.date() + timedelta(days=1) if type(until) is datetime else until
 
