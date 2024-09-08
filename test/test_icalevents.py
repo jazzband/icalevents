@@ -5,6 +5,7 @@ from time import sleep
 from dateutil.relativedelta import relativedelta
 from dateutil.tz import UTC, gettz
 from re import search
+import pytz
 
 
 class ICalEventsTests(unittest.TestCase):
@@ -421,6 +422,7 @@ class ICalEventsTests(unittest.TestCase):
         events = icalevents.events(
             file=ical, start=start, end=end, tzinfo=tz, sort=True, strict=True
         )
+        # self.assertEqual(events[2].start, 2)
 
         times = [
             ((2021, 4, 1, 14, 0), (2021, 4, 1, 14, 30)),
@@ -432,7 +434,6 @@ class ICalEventsTests(unittest.TestCase):
             ((2021, 4, 8, 14, 30), (2021, 4, 8, 15, 0)),
             ((2021, 4, 8, 15, 0), (2021, 4, 8, 15, 30)),
             ((2021, 4, 9), (2021, 4, 10)),
-            # ((2021, 4, 9), (2021, 4, 10)), # Google said this should exist, microsoft disagrees
             ((2021, 4, 12, 11, 0), (2021, 4, 12, 11, 30)),
             ((2021, 4, 12, 16, 0), (2021, 4, 12, 17, 0)),
             ((2021, 4, 14), (2021, 4, 15)),
@@ -642,6 +643,26 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(e2.floating, True, "respect floating time")
         self.assertEqual(e2.start.tzinfo, UTC, "check tz as default utc")
 
+    def test_floating_strict(self):
+        ical = "test/test_data/floating.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1, e2] = icalevents.events(file=ical, start=start, end=end, strict=True)
+
+        self.assertEqual(e1.transparent, False, "respect transparency")
+        self.assertEqual(
+            e1.start.astimezone(pytz.utc).hour, 6, "check start of the day"
+        )
+        self.assertEqual(e1.end.astimezone(pytz.utc).hour, 14, "check end of the day")
+        self.assertEqual(e1.floating, False, "respect floating time")
+        self.assertEqual(e1.start.tzname(), "CEST", "check tz as specified in calendar")
+
+        self.assertEqual(e2.transparent, True, "respect transparency")
+        self.assertEqual(e2.start, date(2021, 10, 13), "check start of the day")
+        self.assertEqual(e2.end, date(2021, 10, 14), "check end of the day")
+        self.assertEqual(e2.floating, False, "dates are not floating floating time")
+
     def test_non_floating(self):
         ical = "test/test_data/non_floating.ics"
         start = date(2021, 1, 1)
@@ -660,10 +681,29 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(e2.transparent, True, "respect transparency")
         self.assertEqual(e2.start.hour, 0, "check start of the day")
         self.assertEqual(e2.end.hour, 0, "check end of the day")
-        self.assertEqual(e2.floating, False, "respect floating time")
+        self.assertEqual(e2.floating, True, "respect floating time")
         self.assertEqual(
             e2.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
         )
+
+    def test_non_floating_strict(self):
+        ical = "test/test_data/non_floating.ics"
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [e1, e2] = icalevents.events(file=ical, start=start, end=end, strict=True)
+
+        self.assertEqual(e1.transparent, False, "respect transparency")
+        self.assertEqual(e1.start.hour, 8, "check start of the day")
+        self.assertEqual(e1.end.hour, 16, "check end of the day")
+        self.assertEqual(e1.floating, False, "respect floating time")
+        self.assertEqual(e1.start.tzname(), "CEST", "check tz as specified in calendar")
+
+        self.assertEqual(e2.transparent, True, "respect transparency")
+        self.assertEqual(e2.floating, False, "respect floating time")
+        self.assertEqual(e2.all_day, True, "it is an all day event")
+        self.assertEqual(e2.start, date(2021, 10, 13), "it is an all day event")
+        self.assertEqual(e2.end, date(2021, 10, 14), "it is an all day event")
 
     def test_recurring_override(self):
         ical = "test/test_data/recurring_override.ics"
@@ -795,3 +835,47 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(evs[3].start, datetime(2022, 4, 22, 11, 0, 0, tzinfo=tz))
         self.assertEqual(evs[4].start, datetime(2022, 4, 29, 11, 0, 0, tzinfo=tz))
         # parsing stops at 2022-05-01
+
+    def test_google_2024(self):
+        ical = "test/test_data/google_2024.ics"
+        start = date(2024, 1, 1)
+        end = date(2024, 12, 31)
+
+        [e1, *events] = icalevents.events(file=ical, start=start, end=end, strict=True)
+
+        self.assertEqual(e1.start.astimezone(pytz.utc).hour, 6, "starts at 6 utc")
+        self.assertEqual(e1.end.astimezone(pytz.utc).hour, 7, "ends at 7 utc")
+        self.assertEqual(e1.floating, False, "respect floating time")
+        self.assertEqual(e1.start.tzname(), "CET", "check tz as specified in calendar")
+
+        self.assertEqual(
+            events[4].start.astimezone(pytz.utc).hour, 6, "starts at 6 utc"
+        )
+        self.assertEqual(
+            events[5].start.astimezone(pytz.utc).hour,
+            5,
+            "starts at 5 utc summer time (+2:00)",
+        )
+        self.assertEqual(
+            events[6].start.astimezone(pytz.utc).hour,
+            5,
+            "starts at 5 utc summer time (+2:00)",
+        )
+
+    def test_regression_repeating_events_raise_an_error(self):
+        ical = "test/test_data/recurrence_tzinfo.ics"
+        start = date(2023, 1, 1)
+        end = date(2024, 12, 31)
+
+        events = icalevents.events(file=ical, start=start, end=end, strict=True)
+
+        self.assertEqual(len(events), 6, "6 events")
+        self.assertEqual(events[0].start, date(2023, 11, 27), "first on 27. nov")
+        self.assertEqual(events[1].start, date(2023, 12, 4), "second event on 4. dec")
+        self.assertEqual(events[2].start, date(2023, 12, 11), "third event on 11. dec")
+        self.assertEqual(
+            events[3].start,
+            date(2024, 1, 1),
+            "fourth event on 1. jan - 18. and 25. dec are excluded",
+        )
+        self.assertEqual(events[4].start, date(2024, 1, 8), "fifth event on 8. jan")

@@ -9,16 +9,14 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-icalendar = "4.0.9"
-python-dateutil = "^2.8.2"
-pytz = "^2021.3"
-DateTime = "^4.3"
-httplib2 = "^0.20.4"
+icalendar = "5.0.13"
+python-dateutil = "^2.9.0"
+pytz = "^2024.1"
+httplib2 = "^0.22.0"
 
 [tool.poetry.dev-dependencies]
 coverage = "^6.0.1"
-codecov = "^2.1.12"
-pytest = "^6.2.5"
+pytest = "^8.3.2"
 black = "^22.3.0"
 flake8 = "^5.0.4"
 
