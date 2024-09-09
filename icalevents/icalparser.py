@@ -167,11 +167,12 @@ def encode(value: Optional[vText]) -> Optional[str]:
         return str(value.encode("utf-8"))
 
 
-def create_event(component, utc_default, strict):
+def create_event(component, strict):
     """
     Create an event from its iCal representation.
 
     :param component: iCal component
+    :param strict:
     :return: event
     """
 
@@ -323,11 +324,9 @@ def parse_events(
 
     # If there's exactly one timezone in the file,
     # assume it applies globally, otherwise UTC
-    utc_default = False
     if len(timezones) == 1:
         cal_tz = get_timezone(list(timezones)[0])
     else:
-        utc_default = True
         cal_tz = UTC
     # < ==========================================
 
@@ -358,7 +357,7 @@ def parse_events(
                 exceptions[exdate[0:8]] = exdate
 
         if component.name == "VEVENT":
-            e = create_event(component, utc_default, strict)
+            e = create_event(component, strict)
 
             # make rule.between happy and provide from, to points in time that have the same format as dtstart
             s = component["dtstart"].dt

@@ -902,6 +902,19 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(evs[3].start, datetime(2022, 6, 8, 13, 00, 0, tzinfo=tz))
         self.assertEqual(evs[3].summary, "Recurring Event")
 
+    def test_per_event_timezone(self):
+        ical = "test/test_data/per_event_timezone.ics"
+        start = date(2024, 1, 1)
+        end = date(2024, 12, 30)
+
+        events = icalevents.events(file=ical, start=start, end=end, strict=True)
+        self.assertEqual(
+            events[0].start.tzname(), "CET", "check tz as specified in calendar"
+        )
+        self.assertEqual(
+            events[1].start.tzname(), "AWST", "check tz as specified in calendar"
+        )
+
     def test_regression_repeating_events_raise_an_error(self):
         ical = "test/test_data/recurrence_tzinfo.ics"
         start = date(2023, 1, 1)
