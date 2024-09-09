@@ -5,6 +5,7 @@ from time import sleep
 from dateutil.relativedelta import relativedelta
 from dateutil.tz import UTC, gettz
 from re import search
+import textwrap
 import pytz
 
 
@@ -932,3 +933,15 @@ class ICalEventsTests(unittest.TestCase):
             "fourth event on 1. jan - 18. and 25. dec are excluded",
         )
         self.assertEqual(events[4].start, date(2024, 1, 8), "fifth event on 8. jan")
+
+    def test_regression_recurring_events_with_timezones(self):
+        # we need to test if all active events are returned, even if they do not fit fully in the defined window
+        tz = gettz("Europe/Berlin")
+        ical = "test/test_data/recurring_small_window.ics"
+        start = datetime(2022, 1, 11, 0, 0, 1, tzinfo=tz)
+        end = datetime(2022, 1, 11, 8, 0, 1, tzinfo=tz)
+
+        events = icalevents.events(file=ical, start=start, end=end, strict=True)
+
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].end.hour, 8)

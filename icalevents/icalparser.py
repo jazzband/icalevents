@@ -404,7 +404,12 @@ def parse_events(
 
             if e.recurring:
                 rule = parse_rrule(component)
-                for dt in rule.between(f, t, inc=True):
+                # We can not use rule.between because the event has to fit in between https://github.com/jazzband/icalevents/issues/101
+                for dt in [
+                    dt
+                    for dt in list(rule.between(f - (end - start), t + (end - start)))
+                    if dt >= f and dt <= t
+                ]:
                     # Recompute the start time in the current timezone *on* the
                     # date of *this* occurrence. This handles the case where the
                     # recurrence has crossed over the daylight savings time boundary.
