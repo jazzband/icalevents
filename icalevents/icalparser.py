@@ -365,12 +365,42 @@ def parse_events(
             if type(s) is date and e.recurring == False:
                 f, t = start, end
             elif type(s) is datetime and s.tzinfo:
-                f, t = datetime(
-                    start.year, start.month, start.day, tzinfo=s.tzinfo
-                ), datetime(end.year, end.month, end.day, tzinfo=s.tzinfo)
+                f = (
+                    datetime(
+                        start.year,
+                        start.month,
+                        start.day,
+                        start.hour,
+                        start.minute,
+                        tzinfo=s.tzinfo,
+                    )
+                    if type(start) == datetime
+                    else datetime(start.year, start.month, start.day, tzinfo=s.tzinfo)
+                )
+                t = (
+                    datetime(
+                        end.year,
+                        end.month,
+                        end.day,
+                        end.hour,
+                        end.minute,
+                        tzinfo=s.tzinfo,
+                    )
+                    if type(end) == datetime
+                    else datetime(end.year, end.month, end.day, tzinfo=s.tzinfo)
+                )
             else:
-                f, t = datetime(start.year, start.month, start.day), datetime(
-                    end.year, end.month, end.day
+                f = (
+                    datetime(
+                        start.year, start.month, start.day, start.hour, start.minute
+                    )
+                    if type(start) == datetime
+                    else datetime(start.year, start.month, start.day)
+                )
+                t = (
+                    datetime(end.year, end.month, end.day, end.hour, end.minute)
+                    if type(end) == datetime
+                    else datetime(end.year, end.month, end.day)
                 )
 
             if e.recurring:

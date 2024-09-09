@@ -862,6 +862,17 @@ class ICalEventsTests(unittest.TestCase):
             "starts at 5 utc summer time (+2:00)",
         )
 
+    def test_small_time_frame(self):
+        ical = "test/test_data/small_time_frame.ics"
+
+        PT = gettz("America/Los_Angeles")
+        start = datetime(month=5, day=9, year=2023, tzinfo=PT)
+        end = datetime(month=5, day=9, year=2023, hour=23, tzinfo=PT)
+
+        events = icalevents.events(file=ical, start=start, end=end, strict=True)
+
+        self.assertEqual(len(events), 1, "1 events")
+
     def test_regression_repeating_events_raise_an_error(self):
         ical = "test/test_data/recurrence_tzinfo.ics"
         start = date(2023, 1, 1)
