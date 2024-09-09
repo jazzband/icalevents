@@ -945,3 +945,12 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertEqual(len(events), 1)
         self.assertEqual(events[0].end.hour, 8)
+
+    def test_regression_offset_aware_comparison(self):
+        ical = "test/test_data/regression_offset_native.ics"
+        start = datetime(2020, 7, 1)
+        end = datetime(2020, 7, 31)
+
+        events = icalevents.events(file=ical, start=start, end=end, strict=True)
+
+        self.assertEqual(len(events), 1)

@@ -360,10 +360,11 @@ def parse_events(
             e = create_event(component, strict)
 
             # make rule.between happy and provide from, to points in time that have the same format as dtstart
-            s = component["dtstart"].dt
-            if type(s) is date and e.recurring == False:
-                f, t = start, end
-            elif type(s) is datetime and s.tzinfo:
+            if type(e.start) is date and e.recurring == False:
+                f, t = date(start.year, start.month, start.day), date(
+                    end.year, end.month, end.day
+                )
+            elif type(e.start) is datetime and e.start.tzinfo:
                 f = (
                     datetime(
                         start.year,
@@ -371,10 +372,12 @@ def parse_events(
                         start.day,
                         start.hour,
                         start.minute,
-                        tzinfo=s.tzinfo,
+                        tzinfo=e.start.tzinfo,
                     )
                     if type(start) == datetime
-                    else datetime(start.year, start.month, start.day, tzinfo=s.tzinfo)
+                    else datetime(
+                        start.year, start.month, start.day, tzinfo=e.start.tzinfo
+                    )
                 )
                 t = (
                     datetime(
@@ -383,10 +386,10 @@ def parse_events(
                         end.day,
                         end.hour,
                         end.minute,
-                        tzinfo=s.tzinfo,
+                        tzinfo=e.start.tzinfo,
                     )
                     if type(end) == datetime
-                    else datetime(end.year, end.month, end.day, tzinfo=s.tzinfo)
+                    else datetime(end.year, end.month, end.day, tzinfo=e.start.tzinfo)
                 )
             else:
                 f = (
@@ -421,7 +424,7 @@ def parse_events(
                             )
                         else:
                             ecopy = e.copy_to(
-                                dt.date() if type(s) is date else dt, e.uid
+                                dt.date() if type(e.start) is date else dt, e.uid
                             )
                         found.append(ecopy)
 
