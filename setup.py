@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from setuptools import setup
 
-version = "0.1.27"
+version = "0.1.29"
 
 setup(
     name="icalevents",
@@ -14,8 +14,8 @@ setup(
     ],
     version=version,
     description="iCal downloader and parser",
-    author="Thomas Irgang",
-    author_email="thomas@irgang-la.de",
+    author="Martin Eigenmann",
+    author_email="",
     url="https://github.com/jazzband/icalevents",
     download_url="https://github.com/jazzband/icalevents/archive/v"
     + version
@@ -32,6 +32,13 @@ setup(
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
