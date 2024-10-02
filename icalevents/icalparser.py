@@ -15,8 +15,12 @@ from icalendar import Calendar
 from icalendar.prop import vDDDLists, vText
 from uuid import uuid4
 
-from icalendar.windows_to_olson import WINDOWS_TO_OLSON
+from icalendar import use_pytz
+from icalendar.timezone.windows_to_olson import WINDOWS_TO_OLSON
 from pytz import timezone
+
+
+use_pytz()
 
 
 def now():
