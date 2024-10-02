@@ -9,7 +9,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-icalendar = "5.0.13"
+icalendar = "^6.0.0"
 python-dateutil = "^2.9.0"
 pytz = "^2024.1"
 httplib2 = "^0.22.0"
