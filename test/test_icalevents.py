@@ -203,9 +203,7 @@ class ICalEventsTests(unittest.TestCase):
         end = date(2017, 7, 13)
 
         ev = icalevents.events(url=None, file=ical, start=start, end=end)[0]
-        self.assertFalse(
-            ev.recurring, "check recurring=False for non recurring event"
-        )
+        self.assertFalse(ev.recurring, "check recurring=False for non recurring event")
 
         ical = "test/test_data/recurring.ics"
         start = date(2018, 10, 15)
@@ -215,12 +213,8 @@ class ICalEventsTests(unittest.TestCase):
 
         e1 = evs[1]
         e2 = evs[2]
-        self.assertTrue(
-            e1.recurring, "check recurring=True for recurring event (1)"
-        )
-        self.assertTrue(
-            e2.recurring, "check recurring=True for recurring event (2)"
-        )
+        self.assertTrue(e1.recurring, "check recurring=True for recurring event (1)")
+        self.assertTrue(e2.recurring, "check recurring=True for recurring event (2)")
 
     def test_events_async_url(self):
         url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
