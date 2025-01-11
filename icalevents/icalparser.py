@@ -250,7 +250,7 @@ def create_event(component, strict):
         event.last_modified = event.created
 
     # sequence can be 0 - test for None instead
-    if not component.get("sequence") is None:
+    if component.get("sequence") is not None:
         event.sequence = component.get("sequence")
 
     if component.get("categories"):
@@ -360,7 +360,7 @@ def parse_events(
             e = create_event(component, strict)
 
             # make rule.between happy and provide from, to points in time that have the same format as dtstart
-            if type(e.start) is date and e.recurring == False:
+            if type(e.start) is date and not e.recurring:
                 f, t = date(start.year, start.month, start.day), date(
                     end.year, end.month, end.day
                 )
