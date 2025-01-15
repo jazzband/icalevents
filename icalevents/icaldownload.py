@@ -65,6 +65,7 @@ class ICalDownload:
             url = apple_url_fix(url)
 
         _, content = self.http.request(url)
+        self.http.close()
 
         if not content:
             raise ConnectionError("Could not get data from %s!" % url)
