@@ -5,17 +5,17 @@ description = "Simple Python 3 library to download, parse and query iCal sources
 authors = [
     { name = "Martin Eigenmann", email = "github@eigenmannmartin.ch" },
     { name = "Thomas Irgang", email = "thomas@irgang.eu" },
-    { name = "Alexander Hultnér", email = "ahultner+github@gmail.com" }
+    { name = "Alexander Hultnér", email = "ahultner+github@gmail.com" },
 ]
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.9"
 
 dependencies = [
-  "icalendar (~=6.0)",
-  "python-dateutil (~=2.9)",
-  "pytz (>=2024.2)",
-  "httplib2 (~=0.22)",
+    "icalendar (~=6.0)",
+    "python-dateutil (~=2.9)",
+    "pytz (>=2024.2)",
+    "httplib2 (~=0.22)",
 ]
 
 [tool.poetry]
