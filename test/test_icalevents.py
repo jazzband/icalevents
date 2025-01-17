@@ -31,7 +31,28 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(len(events), 2, "two events are found")
 
     @pook.on
-    def test_utf8_events_url(self):
+    def test_events_url_without_charset(self):
+        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
+
+        with open("test/test_data/basic.ics", "rb") as file:
+            body = file.read()
+
+        pook.get(
+            url,
+            reply=200,
+            response_headers={"Content-Type": "text/calendar"},
+            response_body=body,
+        )
+
+        start = date(2017, 5, 18)
+        end = date(2017, 5, 19)
+
+        events = icalevents.events(url=url, file=None, start=start, end=end)
+
+        self.assertEqual(len(events), 2, "two events are found")
+
+    @pook.on
+    def test_events_url_with_utf8(self):
         url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
 
         with open("test/test_data/basic.ics", "rb") as file:
@@ -52,7 +73,7 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(len(events), 2, "two events are found")
 
     @pook.on
-    def test_latin1_events_url(self):
+    def test_events_url_with_latin1(self):
         url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic_latin1.ics"
 
         with open("test/test_data/basic_latin1.ics", "rb") as file:

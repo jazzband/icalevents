@@ -59,10 +59,12 @@ class ICalDownload:
         if not response.data:
             raise ConnectionError("Could not get data from %s!" % url)
 
-        encoding = "utf-8"
+        content_type = response.headers.get("content-type")
 
-        if "charset=" in response.headers["Content-Type"]:
-            encoding = response.headers["Content-Type"].split("charset=")[1]
+        try:
+            encoding = content_type.split("charset=")[1]
+        except (AttributeError, IndexError):
+            encoding = "utf-8"
 
         return self.decode(response.data, encoding, apple_fix=apple_fix)
 
