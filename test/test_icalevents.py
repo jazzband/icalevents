@@ -1,23 +1,108 @@
 import unittest
-from icalevents import icalevents
 from datetime import date, timedelta, datetime
 from time import sleep
-from dateutil.relativedelta import relativedelta
-from dateutil.tz import UTC, gettz
-from re import search
-import textwrap
+
+import pook
 import pytz
+from dateutil.tz import UTC, gettz
+
+from icalevents import icalevents
 
 
 class ICalEventsTests(unittest.TestCase):
-    def test_events_url(self):
+    @pook.on
+    def test_events_url_without_content_type(self):
         url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
+
+        with open("test/test_data/basic.ics", "rb") as file:
+            body = file.read()
+
+        pook.get(
+            url,
+            reply=200,
+            response_body=body,
+        )
+
         start = date(2017, 5, 18)
         end = date(2017, 5, 19)
 
-        evs = icalevents.events(url=url, file=None, start=start, end=end)
+        events = icalevents.events(url=url, file=None, start=start, end=end)
 
-        self.assertEqual(len(evs), 2, "two events are found")
+        self.assertEqual(len(events), 2, "two events are found")
+
+    @pook.on
+    def test_events_url_without_charset(self):
+        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
+
+        with open("test/test_data/basic.ics", "rb") as file:
+            body = file.read()
+
+        pook.get(
+            url,
+            reply=200,
+            response_headers={"Content-Type": "text/calendar"},
+            response_body=body,
+        )
+
+        start = date(2017, 5, 18)
+        end = date(2017, 5, 19)
+
+        events = icalevents.events(url=url, file=None, start=start, end=end)
+
+        self.assertEqual(len(events), 2, "two events are found")
+
+    @pook.on
+    def test_events_url_with_utf8(self):
+        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
+
+        with open("test/test_data/basic.ics", "rb") as file:
+            body = file.read()
+
+        pook.get(
+            url,
+            reply=200,
+            response_headers={"Content-Type": "text/calendar; charset=UTF-8"},
+            response_body=body,
+        )
+
+        start = date(2017, 5, 18)
+        end = date(2017, 5, 19)
+
+        events = icalevents.events(url=url, file=None, start=start, end=end)
+
+        self.assertEqual(len(events), 2, "two events are found")
+
+    @pook.on
+    def test_events_url_with_latin1(self):
+        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic_latin1.ics"
+
+        with open("test/test_data/basic_latin1.ics", "rb") as file:
+            body = file.read()
+
+        pook.get(
+            url,
+            reply=200,
+            response_headers={"Content-Type": "text/calendar; charset=ISO-8859-1"},
+            response_body=body,
+        )
+
+        start = date(2017, 5, 18)
+        end = date(2017, 5, 19)
+
+        events = icalevents.events(url=url, file=None, start=start, end=end)
+
+        self.assertEqual(len(events), 2, "two events are found")
+
+    @pook.on
+    def test_exception_on_empty_events_url(self):
+        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
+
+        pook.get(
+            url,
+            reply=500,
+        )
+
+        self.assertRaises(ConnectionError, icalevents.events, url=url)
 
     def test_events_start(self):
         ical = "test/test_data/basic.ics"

@@ -2,7 +2,7 @@
 Downloads an iCal url or reads an iCal file.
 """
 
-from httplib2 import Http
+import urllib3
 import logging
 
 
@@ -33,25 +33,15 @@ class ICalDownload:
     Downloads or reads and decodes iCal sources.
     """
 
-    def __init__(self, http=None, encoding="utf-8"):
+    def __init__(self, http=None):
         # Get logger
         logger = logging.getLogger()
 
         # default http connection to use
         if http is None:
-            try:
-                http = Http(".cache")
-            except (PermissionError, OSError) as e:
-                # Cache disabled if no write permission in working directory
-                logger.warning(
-                    (
-                        "Caching is disabled due to a read-only working directory: {}"
-                    ).format(e)
-                )
-                http = Http()
+            http = urllib3.PoolManager()
 
         self.http = http
-        self.encoding = encoding
 
     def data_from_url(self, url, apple_fix=False):
         """
@@ -64,12 +54,19 @@ class ICalDownload:
         if apple_fix:
             url = apple_url_fix(url)
 
-        _, content = self.http.request(url)
+        response = self.http.request("GET", url)
 
-        if not content:
+        if not response.data:
             raise ConnectionError("Could not get data from %s!" % url)
 
-        return self.decode(content, apple_fix=apple_fix)
+        content_type = response.headers.get("content-type")
+
+        try:
+            encoding = content_type.split("charset=")[1]
+        except (AttributeError, IndexError):
+            encoding = "utf-8"
+
+        return self.decode(response.data, encoding, apple_fix=apple_fix)
 
     def data_from_file(self, file, apple_fix=False):
         """
@@ -93,15 +90,17 @@ class ICalDownload:
 
         return self.decode(string_content, apple_fix=apple_fix)
 
-    def decode(self, content, apple_fix=False):
+    @staticmethod
+    def decode(content, encoding="utf-8", apple_fix=False):
         """
         Decode content using the set charset.
 
         :param content: content do decode
+        :param encoding: the used charset for decoding the content
         :param apple_fix: fix Apple txdata bug
         :return: decoded (and fixed) content
         """
-        content = content.decode(self.encoding)
+        content = content.decode(encoding)
         content = content.replace("\r", "")
 
         if apple_fix:
