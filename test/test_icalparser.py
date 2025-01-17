@@ -38,7 +38,7 @@ class ICalParserTests(unittest.TestCase):
     def test_now(self):
         n = icalevents.icalparser.now()
 
-        self.assertTrue(type(n) == datetime, "result of now has type datetime")
+        self.assertEqual(type(n), datetime, "result of now has type datetime")
         self.assertTrue(n.tzinfo, "result of now has a timezone info")
 
     def test_time_left(self):
@@ -76,7 +76,7 @@ class ICalParserTests(unittest.TestCase):
         self.assertEqual(eventD.description, eventC.description, "copy to: description")
 
     def test_event_order(self):
-        self.assertTrue(self.eventA > self.eventB, "order of events")
+        self.assertGreater(self.eventA, self.eventB, "order of events")
 
     def test_attendee(self):
         self.assertIsInstance(self.eventA.attendee, str)

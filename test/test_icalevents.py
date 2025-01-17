@@ -225,7 +225,7 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(
             ev_0.start, datetime(2021, 3, 19, 00, 0, 0, tzinfo=gettz("Europe/Berlin"))
         )
-        self.assertEqual(ev_0.recurring, True, "Recurring all day event")
+        self.assertTrue(ev_0.recurring, "Recurring all day event")
         self.assertEqual(ev_0.summary, "Away")
 
     def test_events_rrule_until_all_day_google(self):
@@ -240,7 +240,7 @@ class ICalEventsTests(unittest.TestCase):
         self.assertEqual(
             ev.start, datetime(2021, 3, 24, 00, 0, 0, tzinfo=gettz("Europe/Zurich"))
         )
-        self.assertEqual(ev.all_day, True, "All day event")
+        self.assertTrue(ev.all_day, "All day event")
         self.assertEqual(ev.summary, "Busy")
 
     def test_events_rrule_until_only_date(self):
@@ -266,9 +266,9 @@ class ICalEventsTests(unittest.TestCase):
         evs = icalevents.events(file=ical, start=start, end=end)
 
         self.assertEqual(len(evs), 2)
-        self.assertEqual(evs[0].recurring, True)
+        self.assertTrue(evs[0].recurring)
         self.assertEqual(evs[0].summary, "Recurring All-day Event")
-        self.assertEqual(evs[1].recurring, True)
+        self.assertTrue(evs[1].recurring)
         self.assertEqual(evs[1].summary, "Daily lunch event")
 
     def test_event_attributes(self):
@@ -288,9 +288,7 @@ class ICalEventsTests(unittest.TestCase):
         end = date(2017, 7, 13)
 
         ev = icalevents.events(url=None, file=ical, start=start, end=end)[0]
-        self.assertEqual(
-            ev.recurring, False, "check recurring=False for non recurring event"
-        )
+        self.assertFalse(ev.recurring, "check recurring=False for non recurring event")
 
         ical = "test/test_data/recurring.ics"
         start = date(2018, 10, 15)
@@ -300,12 +298,8 @@ class ICalEventsTests(unittest.TestCase):
 
         e1 = evs[1]
         e2 = evs[2]
-        self.assertEqual(
-            e1.recurring, True, "check recurring=True for recurring event (1)"
-        )
-        self.assertEqual(
-            e2.recurring, True, "check recurring=True for recurring event (2)"
-        )
+        self.assertTrue(e1.recurring, "check recurring=True for recurring event (1)")
+        self.assertTrue(e2.recurring, "check recurring=True for recurring event (2)")
 
     def test_events_async_url(self):
         url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
@@ -382,9 +376,9 @@ class ICalEventsTests(unittest.TestCase):
 
         e1 = icalevents.events(file=ical, start=start, end=end)[0]
 
-        self.assertEqual(e1.description, None)
-        self.assertEqual(e1.summary, None)
-        self.assertEqual(e1.location, None)
+        self.assertIsNone(e1.description)
+        self.assertIsNone(e1.summary)
+        self.assertIsNone(e1.location)
 
     def test_event_created_last_modified(self):
         ical = "test/test_data/created_last_modified.ics"
@@ -403,8 +397,8 @@ class ICalEventsTests(unittest.TestCase):
             events[1].last_modified, datetime(2017, 1, 4, 8, 4, 1, tzinfo=UTC)
         )
 
-        self.assertEqual(events[2].created, None)
-        self.assertEqual(events[2].last_modified, None)
+        self.assertIsNone(events[2].created)
+        self.assertIsNone(events[2].last_modified)
 
     def test_event_categories(self):
         ical = "test/test_data/categories_test.ics"
@@ -653,8 +647,8 @@ class ICalEventsTests(unittest.TestCase):
 
         [e1, e2] = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(e1.transparent, True, "respect transparency")
-        self.assertEqual(e2.transparent, False, "respect opaqueness")
+        self.assertTrue(e1.transparent, "respect transparency")
+        self.assertFalse(e2.transparent, "respect opaqueness")
 
     def test_status_and_url(self):
         ical = "test/test_data/status_and_url.ics"
@@ -663,12 +657,12 @@ class ICalEventsTests(unittest.TestCase):
 
         [ev1, ev2, ev3, ev4, ev5] = icalevents.events(file=ical, start=start, end=end)
         self.assertEqual(ev1.status, "TENTATIVE")
-        self.assertEqual(ev1.url, None)
+        self.assertIsNone(ev1.url)
         self.assertEqual(ev2.status, "CONFIRMED")
         self.assertEqual(ev2.url, "https://example.com/")
         self.assertEqual(ev3.status, "CANCELLED")
         self.assertEqual(ev4.status, "CANCELLED")
-        self.assertEqual(ev5.status, None)
+        self.assertIsNone(ev5.status)
 
     def test_recurrence_tz(self):
         ical = "test/test_data/recurrence_tz.ics"
@@ -717,16 +711,16 @@ class ICalEventsTests(unittest.TestCase):
 
         [e1, e2] = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(e1.transparent, False, "respect transparency")
+        self.assertFalse(e1.transparent, "respect transparency")
         self.assertEqual(e1.start.hour, 6, "check start of the day")
         self.assertEqual(e1.end.hour, 14, "check end of the day")
-        self.assertEqual(e1.floating, False, "respect floating time")
+        self.assertFalse(e1.floating, "respect floating time")
         self.assertEqual(e1.start.tzinfo, UTC, "check tz as default utc")
 
-        self.assertEqual(e2.transparent, True, "respect transparency")
+        self.assertTrue(e2.transparent, "respect transparency")
         self.assertEqual(e2.start.hour, 0, "check start of the day")
         self.assertEqual(e2.end.hour, 0, "check end of the day")
-        self.assertEqual(e2.floating, True, "respect floating time")
+        self.assertTrue(e2.floating, "respect floating time")
         self.assertEqual(e2.start.tzinfo, UTC, "check tz as default utc")
 
     def test_floating_strict(self):
@@ -736,18 +730,18 @@ class ICalEventsTests(unittest.TestCase):
 
         [e1, e2] = icalevents.events(file=ical, start=start, end=end, strict=True)
 
-        self.assertEqual(e1.transparent, False, "respect transparency")
+        self.assertFalse(e1.transparent, "respect transparency")
         self.assertEqual(
             e1.start.astimezone(pytz.utc).hour, 6, "check start of the day"
         )
         self.assertEqual(e1.end.astimezone(pytz.utc).hour, 14, "check end of the day")
-        self.assertEqual(e1.floating, False, "respect floating time")
+        self.assertFalse(e1.floating, "respect floating time")
         self.assertEqual(e1.start.tzname(), "CEST", "check tz as specified in calendar")
 
-        self.assertEqual(e2.transparent, True, "respect transparency")
+        self.assertTrue(e2.transparent, "respect transparency")
         self.assertEqual(e2.start, date(2021, 10, 13), "check start of the day")
         self.assertEqual(e2.end, date(2021, 10, 14), "check end of the day")
-        self.assertEqual(e2.floating, False, "dates are not floating floating time")
+        self.assertFalse(e2.floating, "dates are not floating floating time")
 
     def test_non_floating(self):
         ical = "test/test_data/non_floating.ics"
@@ -756,18 +750,18 @@ class ICalEventsTests(unittest.TestCase):
 
         [e1, e2] = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertEqual(e1.transparent, False, "respect transparency")
+        self.assertFalse(e1.transparent, "respect transparency")
         self.assertEqual(e1.start.hour, 8, "check start of the day")
         self.assertEqual(e1.end.hour, 16, "check end of the day")
-        self.assertEqual(e1.floating, False, "respect floating time")
+        self.assertFalse(e1.floating, "respect floating time")
         self.assertEqual(
             e1.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
         )
 
-        self.assertEqual(e2.transparent, True, "respect transparency")
+        self.assertTrue(e2.transparent, "respect transparency")
         self.assertEqual(e2.start.hour, 0, "check start of the day")
         self.assertEqual(e2.end.hour, 0, "check end of the day")
-        self.assertEqual(e2.floating, True, "respect floating time")
+        self.assertTrue(e2.floating, "respect floating time")
         self.assertEqual(
             e2.start.tzinfo, gettz("Europe/Zurich"), "check tz as specified in calendar"
         )
@@ -779,15 +773,15 @@ class ICalEventsTests(unittest.TestCase):
 
         [e1, e2] = icalevents.events(file=ical, start=start, end=end, strict=True)
 
-        self.assertEqual(e1.transparent, False, "respect transparency")
+        self.assertFalse(e1.transparent, "respect transparency")
         self.assertEqual(e1.start.hour, 8, "check start of the day")
         self.assertEqual(e1.end.hour, 16, "check end of the day")
-        self.assertEqual(e1.floating, False, "respect floating time")
+        self.assertFalse(e1.floating, "respect floating time")
         self.assertEqual(e1.start.tzname(), "CEST", "check tz as specified in calendar")
 
-        self.assertEqual(e2.transparent, True, "respect transparency")
-        self.assertEqual(e2.floating, False, "respect floating time")
-        self.assertEqual(e2.all_day, True, "it is an all day event")
+        self.assertTrue(e2.transparent, "respect transparency")
+        self.assertFalse(e2.floating, "respect floating time")
+        self.assertTrue(e2.all_day, "it is an all day event")
         self.assertEqual(e2.start, date(2021, 10, 13), "it is an all day event")
         self.assertEqual(e2.end, date(2021, 10, 14), "it is an all day event")
 
@@ -931,7 +925,7 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertEqual(e1.start.astimezone(pytz.utc).hour, 6, "starts at 6 utc")
         self.assertEqual(e1.end.astimezone(pytz.utc).hour, 7, "ends at 7 utc")
-        self.assertEqual(e1.floating, False, "respect floating time")
+        self.assertFalse(e1.floating, "respect floating time")
         self.assertEqual(e1.start.tzname(), "CET", "check tz as specified in calendar")
 
         self.assertEqual(
