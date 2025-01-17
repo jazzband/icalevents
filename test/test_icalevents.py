@@ -1,23 +1,54 @@
 import unittest
-from icalevents import icalevents
 from datetime import date, timedelta, datetime
 from time import sleep
-from dateutil.relativedelta import relativedelta
-from dateutil.tz import UTC, gettz
-from re import search
-import textwrap
+
+import pook
 import pytz
+from dateutil.tz import UTC, gettz
+
+from icalevents import icalevents
 
 
 class ICalEventsTests(unittest.TestCase):
-    def test_events_url(self):
+    @pook.on
+    def test_utf8_events_url(self):
+        with open('test/test_data/basic.ics', 'rb') as file:
+            body = file.read()
+
+        pook.get(
+            "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics",
+            reply=200,
+            response_headers={"Content-Type": "text/calendar; charset=UTF-8" },
+            response_body=body,
+        )
+
         url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
         start = date(2017, 5, 18)
         end = date(2017, 5, 19)
 
-        evs = icalevents.events(url=url, file=None, start=start, end=end)
+        events = icalevents.events(url=url, file=None, start=start, end=end)
 
-        self.assertEqual(len(evs), 2, "two events are found")
+        self.assertEqual(len(events), 2, "two events are found")
+
+    @pook.on
+    def test_latin1_events_url(self):
+        with open('test/test_data/basic_latin1.ics', 'rb') as file:
+            body = file.read()
+
+        pook.get(
+            "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic_latin1.ics",
+            reply=200,
+            response_headers={"Content-Type": "text/calendar; charset=ISO-8859-1" },
+            response_body=body,
+        )
+
+        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic_latin1.ics"
+        start = date(2017, 5, 18)
+        end = date(2017, 5, 19)
+
+        events = icalevents.events(url=url, file=None, start=start, end=end)
+
+        self.assertEqual(len(events), 2, "two events are found")
 
     def test_events_start(self):
         ical = "test/test_data/basic.ics"
