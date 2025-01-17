@@ -1,6 +1,6 @@
 [project]
 name = "icalevents"
-version = "0.1.29"
+version = "0.2.0"
 description = "Simple Python 3 library to download, parse and query iCal sources."
 authors = [
     { name = "Martin Eigenmann", email = "github@eigenmannmartin.ch" },
