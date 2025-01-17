@@ -954,3 +954,27 @@ class ICalEventsTests(unittest.TestCase):
         events = icalevents.events(file=ical, start=start, end=end, strict=True)
 
         self.assertEqual(len(events), 1)
+
+    def test_no_uid(self):
+        ical = "test/test_data/no_uid.ics"
+
+        # noinspection DuplicatedCode
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [event] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertIsNot(event.uid, -1)
+        self.assertIsInstance(event.uid, str)
+
+    def test_non_ascii_uid(self):
+        ical = "test/test_data/non_ascii_uid.ics"
+
+        # noinspection DuplicatedCode
+        start = date(2021, 1, 1)
+        end = date(2021, 12, 31)
+
+        [event] = icalevents.events(file=ical, start=start, end=end)
+
+        self.assertIsNot(event.uid, -1)
+        self.assertIsInstance(event.uid, str)
