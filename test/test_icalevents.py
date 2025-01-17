@@ -11,6 +11,26 @@ from icalevents import icalevents
 
 class ICalEventsTests(unittest.TestCase):
     @pook.on
+    def test_events_url_without_content_type(self):
+        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
+
+        with open("test/test_data/basic.ics", "rb") as file:
+            body = file.read()
+
+        pook.get(
+            url,
+            reply=200,
+            response_body=body,
+        )
+
+        start = date(2017, 5, 18)
+        end = date(2017, 5, 19)
+
+        events = icalevents.events(url=url, file=None, start=start, end=end)
+
+        self.assertEqual(len(events), 2, "two events are found")
+
+    @pook.on
     def test_utf8_events_url(self):
         url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
 
