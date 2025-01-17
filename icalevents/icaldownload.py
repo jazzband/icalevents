@@ -2,7 +2,7 @@
 Downloads an iCal url or reads an iCal file.
 """
 
-from httplib2 import Http
+import urllib3
 import logging
 
 
@@ -39,16 +39,7 @@ class ICalDownload:
 
         # default http connection to use
         if http is None:
-            try:
-                http = Http(".cache")
-            except (PermissionError, OSError) as e:
-                # Cache disabled if no write permission in working directory
-                logger.warning(
-                    (
-                        "Caching is disabled due to a read-only working directory: {}"
-                    ).format(e)
-                )
-                http = Http()
+            http = urllib3.PoolManager()
 
         self.http = http
 
@@ -63,17 +54,17 @@ class ICalDownload:
         if apple_fix:
             url = apple_url_fix(url)
 
-        header, content = self.http.request(url)
+        response = self.http.request("GET", url)
 
-        if not content:
+        if not response.data:
             raise ConnectionError("Could not get data from %s!" % url)
 
         encoding = "utf-8"
 
-        if "charset=" in header["content-type"]:
-            encoding = header["content-type"].split("charset=")[1]
+        if "charset=" in response.headers["Content-Type"]:
+            encoding = response.headers["Content-Type"].split("charset=")[1]
 
-        return self.decode(content, encoding, apple_fix=apple_fix)
+        return self.decode(response.data, encoding, apple_fix=apple_fix)
 
     def data_from_file(self, file, apple_fix=False):
         """
