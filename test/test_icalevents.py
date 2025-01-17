@@ -12,13 +12,13 @@ from icalevents import icalevents
 class ICalEventsTests(unittest.TestCase):
     @pook.on
     def test_utf8_events_url(self):
-        with open('test/test_data/basic.ics', 'rb') as file:
+        with open("test/test_data/basic.ics", "rb") as file:
             body = file.read()
 
         pook.get(
             "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics",
             reply=200,
-            response_headers={"Content-Type": "text/calendar; charset=UTF-8" },
+            response_headers={"Content-Type": "text/calendar; charset=UTF-8"},
             response_body=body,
         )
 
@@ -32,13 +32,13 @@ class ICalEventsTests(unittest.TestCase):
 
     @pook.on
     def test_latin1_events_url(self):
-        with open('test/test_data/basic_latin1.ics', 'rb') as file:
+        with open("test/test_data/basic_latin1.ics", "rb") as file:
             body = file.read()
 
         pook.get(
             "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic_latin1.ics",
             reply=200,
-            response_headers={"Content-Type": "text/calendar; charset=ISO-8859-1" },
+            response_headers={"Content-Type": "text/calendar; charset=ISO-8859-1"},
             response_body=body,
         )
 
