@@ -58,7 +58,7 @@ def events(
         content, start=start, end=end, tzinfo=tzinfo, sort=sort, strict=strict
     )
 
-    if found_events is not None and sort is True:
+    if sort is True:
         found_events.sort()
 
     return found_events
