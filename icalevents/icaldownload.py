@@ -33,7 +33,7 @@ class ICalDownload:
     Downloads or reads and decodes iCal sources.
     """
 
-    def __init__(self, http=None, encoding="utf-8"):
+    def __init__(self, http=None):
         # Get logger
         logger = logging.getLogger()
 
@@ -51,7 +51,6 @@ class ICalDownload:
                 http = Http()
 
         self.http = http
-        self.encoding = encoding
 
     def data_from_url(self, url, apple_fix=False):
         """
@@ -64,12 +63,17 @@ class ICalDownload:
         if apple_fix:
             url = apple_url_fix(url)
 
-        _, content = self.http.request(url)
+        header, content = self.http.request(url)
 
         if not content:
             raise ConnectionError("Could not get data from %s!" % url)
 
-        return self.decode(content, apple_fix=apple_fix)
+        encoding = "utf-8"
+
+        if "charset=" in header["content-type"]:
+            encoding = header["content-type"].split("charset=")[1]
+
+        return self.decode(content, encoding, apple_fix=apple_fix)
 
     def data_from_file(self, file, apple_fix=False):
         """
@@ -93,15 +97,17 @@ class ICalDownload:
 
         return self.decode(string_content, apple_fix=apple_fix)
 
-    def decode(self, content, apple_fix=False):
+    @staticmethod
+    def decode(content, encoding = "utf-8", apple_fix=False):
         """
         Decode content using the set charset.
 
         :param content: content do decode
+        :param encoding: the used charset for decoding the content
         :param apple_fix: fix Apple txdata bug
         :return: decoded (and fixed) content
         """
-        content = content.decode(self.encoding)
+        content = content.decode(encoding)
         content = content.replace("\r", "")
 
         if apple_fix:
