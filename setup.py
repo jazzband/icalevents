@@ -7,7 +7,7 @@ setup(
     name="icalevents",
     packages=["icalevents"],
     install_requires=[
-        "httplib2",
+        "urllib3",
         "icalendar",
         "pytz",
         "datetime",
