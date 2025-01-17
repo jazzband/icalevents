@@ -12,17 +12,18 @@ from icalevents import icalevents
 class ICalEventsTests(unittest.TestCase):
     @pook.on
     def test_utf8_events_url(self):
+        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
+
         with open("test/test_data/basic.ics", "rb") as file:
             body = file.read()
 
         pook.get(
-            "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics",
+            url,
             reply=200,
             response_headers={"Content-Type": "text/calendar; charset=UTF-8"},
             response_body=body,
         )
 
-        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
         start = date(2017, 5, 18)
         end = date(2017, 5, 19)
 
@@ -32,23 +33,35 @@ class ICalEventsTests(unittest.TestCase):
 
     @pook.on
     def test_latin1_events_url(self):
+        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic_latin1.ics"
+
         with open("test/test_data/basic_latin1.ics", "rb") as file:
             body = file.read()
 
         pook.get(
-            "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic_latin1.ics",
+            url,
             reply=200,
             response_headers={"Content-Type": "text/calendar; charset=ISO-8859-1"},
             response_body=body,
         )
 
-        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic_latin1.ics"
         start = date(2017, 5, 18)
         end = date(2017, 5, 19)
 
         events = icalevents.events(url=url, file=None, start=start, end=end)
 
         self.assertEqual(len(events), 2, "two events are found")
+
+    @pook.on
+    def test_exception_on_empty_events_url(self):
+        url = "https://raw.githubusercontent.com/jazzband/icalevents/master/test/test_data/basic.ics"
+
+        pook.get(
+            url,
+            reply=500,
+        )
+
+        self.assertRaises(ConnectionError, icalevents.events, url=url)
 
     def test_events_start(self):
         ical = "test/test_data/basic.ics"
