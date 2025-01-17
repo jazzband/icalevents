@@ -1,25 +1,32 @@
-[tool.poetry]
+[project]
 name = "icalevents"
 version = "0.1.29"
 description = "Simple Python 3 library to download, parse and query iCal sources."
-authors = ["Martin Eigenmann <github@eigenmannmartin.ch>", "Thomas Irgang <thomas@irgang.eu>",
-    "Alexander Hultnér <ahultner+github@gmail.com>"]
-license = "MIT Licence"
+authors = [
+    { name = "Martin Eigenmann", email = "github@eigenmannmartin.ch" },
+    { name = "Thomas Irgang", email = "thomas@irgang.eu" },
+    { name = "Alexander Hultnér", email = "ahultner+github@gmail.com" },
+]
 readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
 
-[tool.poetry.dependencies]
-python = "^3.9"
-icalendar = "^6.0.0"
-python-dateutil = "^2.9.0"
-pytz = "^2024.1"
-httplib2 = "^0.22.0"
+dependencies = [
+    "icalendar (~=6.0)",
+    "python-dateutil (~=2.9)",
+    "pytz (>=2024.2)",
+    "httplib2 (~=0.22)",
+]
 
-[tool.poetry.dev-dependencies]
-coverage = "^6.0.1"
-pytest = "^8.3.2"
-black = "^24.3.0"
-flake8 = "^5.0.4"
+[tool.poetry]
+requires-poetry = ">=2.0"
+
+[tool.poetry.group.dev.dependencies]
+coverage = "^7.6.10"
+pytest = "^8.3.4"
+black = "^24.10.0"
+flake8 = "^7.1.1"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0"]
 build-backend = "poetry.core.masonry.api"
