@@ -219,9 +219,9 @@ def create_event(component, strict):
     else:
         event.attendee = str(None)
 
-    if component.get("uid"):
+    try:
         event.uid = component.get("uid").encode("utf-8").decode("ascii")
-    else:
+    except (AttributeError, UnicodeDecodeError):
         event.uid = str(uuid4())  # Be nice - treat every event as unique
 
     if component.get("organizer"):
