@@ -12,7 +12,7 @@ python = "^3.9"
 icalendar = "^6.0.0"
 python-dateutil = "^2.9.0"
 pytz = "^2024.1"
-urllib3 = "^2.3.0"
+urllib3 = ">=1.26.5,<2"
 
 [tool.poetry.dev-dependencies]
 coverage = "^6.0.1"
