@@ -98,7 +98,7 @@ class ICalDownload:
         return self.decode(string_content, apple_fix=apple_fix)
 
     @staticmethod
-    def decode(content, encoding = "utf-8", apple_fix=False):
+    def decode(content, encoding="utf-8", apple_fix=False):
         """
         Decode content using the set charset.
 
