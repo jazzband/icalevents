@@ -14,6 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        # When changing this matrix, you _must_ also change some settings
+        # on codecov. See the following links for more information:
+        # https://docs.codecov.com/docs/notifications#preventing-notifications-until-after-n-builds
+        # https://docs.codecov.com/docs/pull-request-comments#after_n_builds
         icalendar-version:
           - "5.0"
           - "6.0"
