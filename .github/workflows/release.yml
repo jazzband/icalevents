@@ -22,12 +22,12 @@ jobs:
       - name: "Set up latest Python 3 version"
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: "Install poetry"
         uses: abatilo/actions-poetry@v3
         with:
-          poetry-version: 2.0.1
+          poetry-version: "2.0.12"
 
       - name: "Build package"
         run: poetry build
