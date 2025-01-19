@@ -5,30 +5,34 @@ on:
     tags:
     - '*'
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     if: github.repository == 'jazzband/icalevents'
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: "Checkout repository with all history for all branches and tags"
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Python
+      - name: "Set up latest Python 3 version"
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry==2.0.1
+      - name: "Install poetry"
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: 2.0.1
 
-      - name: Build package
+      - name: "Build package"
         run: poetry build
 
-      - name: Upload packages to Jazzband
+      - name: "Upload packages to Jazzband"
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@release/v1
         with:

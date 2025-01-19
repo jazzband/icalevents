@@ -20,23 +20,29 @@ jobs:
           - "6.1"
 
     steps:
-      - uses: actions/checkout@v4
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
       - name: "Set up Python 3.9"
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: "3.9"
+
       - name: "Install poetry"
         uses: abatilo/actions-poetry@v3
         with:
           poetry-version: 2.0.1
-      - name: "Install dependencies"
+
+      - name: "Install icalendar ${{ matrix.icalendar-version }} and other dependencies"
         run: |
           poetry add icalendar~=${{ matrix.icalendar-version }}.0 --no-interaction
           poetry install --no-interaction --no-root
+
       - name: "Test with pytest"
         run: |
           poetry run coverage run test.py
           poetry run coverage xml
+
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v5
         with:
