@@ -2,26 +2,25 @@
 Parse iCal data to Events.
 """
 
-# for UID generation
-from faulthandler import is_enabled
+from datetime import datetime, timedelta, date
+from importlib.metadata import version
 from random import randint
-from datetime import datetime, timedelta, date, tzinfo
 from typing import Optional
+from uuid import uuid4
 
 from dateutil.rrule import rrulestr
 from dateutil.tz import UTC, gettz
-
 from icalendar import Calendar
 from icalendar.prop import vDDDLists, vText
-from uuid import uuid4
-
-from icalendar import use_pytz
-from icalendar.timezone.windows_to_olson import WINDOWS_TO_OLSON
 from pytz import timezone
 
+if version("icalendar") >= "6.0":
+    from icalendar import use_pytz
+    from icalendar.timezone.windows_to_olson import WINDOWS_TO_OLSON
 
-use_pytz()
-
+    use_pytz()
+else:
+    from icalendar.windows_to_olson import WINDOWS_TO_OLSON
 
 def now():
     """
