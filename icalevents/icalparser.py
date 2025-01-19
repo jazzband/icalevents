@@ -22,6 +22,7 @@ if version("icalendar") >= "6.0":
 else:
     from icalendar.windows_to_olson import WINDOWS_TO_OLSON
 
+
 def now():
     """
     Get current time.
