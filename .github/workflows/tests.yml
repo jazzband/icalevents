@@ -14,14 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # When changing this matrix, you _must_ also change some settings
-        # on codecov. See the following links for more information:
+        # When changing this matrix, the project lead (currently @eigenmannmartin)
+        # must change the "after_n_builds" parameter on codecov. It must match
+        # the number of builds being started considering the matrix.
+        # See the following links for more information:
         # https://docs.codecov.com/docs/notifications#preventing-notifications-until-after-n-builds
         # https://docs.codecov.com/docs/pull-request-comments#after_n_builds
         icalendar-version:
-          - "5.0"
-          - "6.0"
-          - "6.1"
+          - "5" # means (>=5.0.0,<6.0.0)
+          - "6" # means (>=6.0.0,<7.0.0)
 
     steps:
       - name: "Checkout repository"
