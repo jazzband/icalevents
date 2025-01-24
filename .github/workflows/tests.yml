@@ -14,10 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # When changing this matrix, you have to change the "after_n_builds"
-        # in the .github/codecov.yml file. It must match the number of builds
-        # being started considering the matrix.
-        # See the following links for more information:
+        # When changing this matrix, you have to change the "after_n_builds" parameter
+        # in the .github/codecov.yml file. It must match the number of builds being
+        # started considering the matrix. See the following links for more information:
         # https://docs.codecov.com/docs/notifications#preventing-notifications-until-after-n-builds
         # https://docs.codecov.com/docs/pull-request-comments#after_n_builds
         icalendar-version:
