@@ -1,8 +1,7 @@
 import unittest
+from pathlib import Path
+
 import icalevents.icaldownload
-import os
-import shutil
-import logging
 
 
 class ICalDownloadTests(unittest.TestCase):
@@ -52,9 +51,15 @@ DTSTART:19180331T020000
         with open(result, mode="r", encoding="utf-8") as f:
             expected = f.read()
 
-        content = icalevents.icaldownload.ICalDownload().data_from_file(file)
+        for kind, input_file in [("str", file), ("Path", Path(file))]:
+            with self.subTest(kind):
+                content = icalevents.icaldownload.ICalDownload().data_from_file(
+                    input_file
+                )
 
-        self.assertEqual(expected, content, "content form iCal file, google format")
+                self.assertEqual(
+                    expected, content, "content form iCal file, Google format"
+                )
 
     def test_data_from_file_apple(self):
         file = "test/test_data/icloud.ics"
@@ -69,7 +74,7 @@ DTSTART:19180331T020000
             file, apple_fix=True
         )
 
-        self.assertEqual(expected, content, "content form iCal file, google format")
+        self.assertEqual(expected, content, "content form iCal file, Apple format")
 
     def test_empty_file(self):
         empty_ical = "test/test_data/empty.ics"

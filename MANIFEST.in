@@ -1,1 +1,1 @@
-recursive-include test *.ics *.txt
+recursive-include test *.ics *.txt py.typed

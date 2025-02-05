@@ -1,5 +1,5 @@
 import unittest
-from datetime import date, timedelta, datetime
+from datetime import date, datetime, timedelta
 from time import sleep
 
 import pook
