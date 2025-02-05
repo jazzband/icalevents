@@ -1,7 +1,9 @@
 import unittest
-import icalevents.icalparser
-from datetime import datetime, date
+from datetime import datetime
+
 from dateutil.tz import UTC, gettz
+
+import icalevents.icalparser
 
 
 class ICalParserTests(unittest.TestCase):

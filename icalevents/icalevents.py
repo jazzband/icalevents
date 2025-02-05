@@ -1,28 +1,34 @@
+from __future__ import annotations
+
+from datetime import datetime, tzinfo as _tzinfo
+from pathlib import Path
 from threading import Lock, Thread
 
-from .icalparser import parse_events, Event
+import urllib3
+
+from .icalparser import Event, parse_events
 from .icaldownload import ICalDownload
 
 
 # Lock for event data
 event_lock = Lock()
 # Event data
-event_store = {}
+event_store: dict[str, list[Event]] = {}
 # Threads
-threads = {}
+threads: dict[str, list[Thread]] = {}
 
 
 def events(
-    url=None,
-    file=None,
-    string_content=None,
-    start=None,
-    end=None,
-    fix_apple=False,
-    http=None,
-    tzinfo=None,
-    sort=None,
-    strict=False,
+    url: str | None = None,
+    file: str | Path | None = None,
+    string_content: bytes | str | None = None,
+    start: datetime | None = None,
+    end: datetime | None = None,
+    fix_apple: bool = False,
+    http: urllib3.PoolManager | None = None,
+    tzinfo: _tzinfo | None = None,
+    sort: bool = False,
+    strict: bool = False,
 ) -> list[Event]:
     """
     Get all events form the given iCal URL occurring in the given time range.
@@ -42,7 +48,7 @@ def events(
     """
     found_events = []
 
-    content = None
+    content = ""
     ical_download = ICalDownload(http=http)
 
     if url:
@@ -58,13 +64,21 @@ def events(
         content, start=start, end=end, tzinfo=tzinfo, sort=sort, strict=strict
     )
 
-    if sort is True:
+    if sort:
         found_events.sort()
 
     return found_events
 
 
-def request_data(key, url, file, string_content, start, end, fix_apple):
+def request_data(
+    key: str,
+    url: str | None,
+    file: str | Path | None,
+    string_content: bytes | str | None,
+    start: datetime | None,
+    end: datetime | None,
+    fix_apple: bool,
+) -> None:
     """
     Request data, update local data cache and remove this Thread from queue.
 
@@ -93,8 +107,14 @@ def request_data(key, url, file, string_content, start, end, fix_apple):
 
 
 def events_async(
-    key, url=None, file=None, start=None, string_content=None, end=None, fix_apple=False
-):
+    key: str,
+    url: str | None = None,
+    file: str | Path | None = None,
+    start: datetime | None = None,
+    string_content: bytes | str | None = None,
+    end: datetime | None = None,
+    fix_apple: bool = False,
+) -> None:
     """
     Trigger an asynchronous data request.
 
@@ -121,7 +141,7 @@ def events_async(
             threads[key][0].start()
 
 
-def request_finished(key):
+def request_finished(key: str) -> None:
     """
     Remove finished Thread from queue.
 
@@ -134,7 +154,7 @@ def request_finished(key):
             threads[key][0].run()
 
 
-def update_events(key, data):
+def update_events(key: str, data: list[Event]) -> None:
     """
     Set the latest events for a key.
 
@@ -145,7 +165,7 @@ def update_events(key, data):
         event_store[key] = data
 
 
-def latest_events(key):
+def latest_events(key: str) -> list[Event]:
     """
     Get the latest downloaded events for the given key.
 
@@ -158,7 +178,7 @@ def latest_events(key):
     return res
 
 
-def all_done(key):
+def all_done(key: str) -> bool:
     """
     Check if requests for the given key are active.
 
