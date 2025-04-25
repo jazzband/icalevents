@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
         # When changing this matrix, you have to change the "after_n_builds" parameter
         # in the .github/codecov.yml file. It must match the number of builds being
         # started considering the matrix. See the following links for more information:
