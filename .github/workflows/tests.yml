@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
         # When changing this matrix, you have to change the "after_n_builds" parameter
         # in the .github/codecov.yml file. It must match the number of builds being
         # started considering the matrix. See the following links for more information:
@@ -40,36 +40,6 @@ jobs:
       - name: "Install icalendar ${{ matrix.icalendar-version }} and other dependencies"
         run: |
           poetry add icalendar~=${{ matrix.icalendar-version }}.0 --no-interaction
-
-      - name: "Test with pytest"
-        run: |
-          poetry run coverage run test.py
-          poetry run coverage xml
-
-      - name: "Upload coverage to Codecov"
-        uses: codecov/codecov-action@v5
-  build_old:
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        python-version: ["3.6", "3.7", "3.8"]
-    steps:
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: "Checkout repository"
-        uses: actions/checkout@v4
-
-      - name: "Install poetry"
-        uses: abatilo/actions-poetry@v3
-        with:
-          poetry-version: "2.0.1"
-
-      - name: "Install dependencies"
-        run: |
-          poetry install
 
       - name: "Test with pytest"
         run: |
