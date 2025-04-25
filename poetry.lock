@@ -221,14 +221,14 @@ six = ">=1.8.0"
 
 [[package]]
 name = "icalendar"
-version = "6.1.0"
+version = "6.1.1"
 description = "iCalendar parser/generator"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "icalendar-6.1.0-py3-none-any.whl", hash = "sha256:46c09b774a6e6948495dafcb166dc15135c8259d0ae25491f154cbc822714b69"},
-    {file = "icalendar-6.1.0.tar.gz", hash = "sha256:43c2db8632959d634f4e48f6e6131e706bf2cdddad488cf0b72fda079b796bad"},
+    {file = "icalendar-6.1.1-py3-none-any.whl", hash = "sha256:accf3a4be9a1f89bad00e0bf14103b02cd9b02dcb9b4258eb717f39d24cf58e9"},
+    {file = "icalendar-6.1.1.tar.gz", hash = "sha256:2c44355a8f006de5ae73fa3f022a1cbe2a0de6b1607ce8879739eb887c4f3471"},
 ]
 
 [package.dependencies]
@@ -717,4 +717,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9"
-content-hash = "8fc64de4f55b234589828215b2dca5a673f1772127f00a7eb4708a634ed109a4"
+content-hash = "21197e64a2880ca0c132fb21c5fc84e6096b4586e5cfc41a31a44eebd08fe237"

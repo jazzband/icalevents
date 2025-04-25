@@ -74,7 +74,7 @@ DTSTART:19180331T020000
     def test_empty_file(self):
         empty_ical = "test/test_data/empty.ics"
 
-        with self.assertRaises(IOError) as cm:
+        with self.assertRaises(OSError) as cm:
             icalevents.icaldownload.ICalDownload().data_from_file(empty_ical)
 
         self.assertEqual(
