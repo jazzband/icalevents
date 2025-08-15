@@ -73,6 +73,7 @@ class Event:
         self.floating = None
         self.status = None
         self.url = None
+        self.component = None
 
     def time_left(self, time=None):
         """
@@ -136,6 +137,7 @@ class Event:
             uid = "%s_%d" % (self.uid, randint(0, 1000000))
 
         ne = Event()
+        ne.component = self.component
         ne.summary = self.summary
         ne.description = self.description
         ne.start = new_start
@@ -181,6 +183,8 @@ def create_event(component, strict):
     """
 
     event = Event()
+
+    event.component = component
 
     event.start = component.get("dtstart").dt
     # The RFC specifies that the TZID parameter must be specified for datetime or time

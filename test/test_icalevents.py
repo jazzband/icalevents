@@ -7,6 +7,7 @@ import pytz
 from dateutil.tz import UTC, gettz
 
 from icalevents import icalevents
+from icalendar.prop import vText
 
 
 class ICalEventsTests(unittest.TestCase):
@@ -1063,3 +1064,15 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertIsNot(event.uid, -1)
         self.assertIsInstance(event.uid, str)
+
+
+    def test_component(self):
+        ical = "test/test_data/cest_every_day_for_one_year.ics"
+        start = date(2020, 1, 1)
+        end = date(2024, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        event = evs[0]
+
+        self.assertEqual(str(event.component["X-MICROSOFT-CDO-BUSYSTATUS"]), "BUSY")
+        self.assertIsInstance(event.component["X-MICROSOFT-CDO-BUSYSTATUS"], vText)
