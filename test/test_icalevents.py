@@ -1065,7 +1065,6 @@ class ICalEventsTests(unittest.TestCase):
         self.assertIsNot(event.uid, -1)
         self.assertIsInstance(event.uid, str)
 
-
     def test_component(self):
         ical = "test/test_data/cest_every_day_for_one_year.ics"
         start = date(2020, 1, 1)
