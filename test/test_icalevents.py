@@ -1050,7 +1050,7 @@ class ICalEventsTests(unittest.TestCase):
 
         [event] = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertIsNot(event.uid, -1)
+        self.assertIsNot(event.uid, "-1")
         self.assertIsInstance(event.uid, str)
 
     def test_non_ascii_uid(self):
@@ -1062,7 +1062,7 @@ class ICalEventsTests(unittest.TestCase):
 
         [event] = icalevents.events(file=ical, start=start, end=end)
 
-        self.assertIsNot(event.uid, -1)
+        self.assertIsNot(event.uid, "-1")
         self.assertIsInstance(event.uid, str)
 
     def test_component(self):
