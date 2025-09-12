@@ -79,7 +79,7 @@ class ICalDownload:
             content = f.read()
 
         if not content:
-            raise IOError("File %s is not readable or is empty!" % file)
+            raise OSError("File %s is not readable or is empty!" % file)
 
         return self.decode(content, apple_fix=apple_fix)
 
@@ -87,7 +87,7 @@ class ICalDownload:
         self, string_content: bytes | str, apple_fix: bool = False
     ) -> str:
         if not string_content:
-            raise IOError("String content is not readable or is empty!")
+            raise OSError("String content is not readable or is empty!")
 
         return self.decode(string_content, apple_fix=apple_fix)
 
@@ -103,7 +103,8 @@ class ICalDownload:
         :param apple_fix: fix Apple txdata bug
         :return: decoded (and fixed) content
         """
-        content = content.decode(encoding)
+        if isinstance(content, bytes):
+            content = content.decode(encoding)
         content = content.replace("\r", "")
 
         if apple_fix:

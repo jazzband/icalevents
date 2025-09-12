@@ -1,6 +1,6 @@
 [project]
 name = "icalevents"
-version = "0.2.0"
+version = "0.3.0"
 description = "Simple Python 3 library to download, parse and query iCal sources."
 authors = [
     { name = "Martin Eigenmann", email = "github@eigenmannmartin.ch" },
@@ -12,7 +12,7 @@ license = "MIT"
 requires-python = ">=3.9"
 
 dependencies = [
-    "icalendar (~=6.0)",
+    "icalendar (>=5.0.0)",
     "python-dateutil (~=2.9)",
     "pytz (>=2024.2)",
     "urllib3 (>=1.26.5)",

@@ -5,6 +5,7 @@ Parse iCal data to Events.
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta, tzinfo as _tzinfo
+from importlib.metadata import version
 from random import randint
 from uuid import uuid4
 
@@ -15,8 +16,13 @@ from icalendar.prop import vDDDLists, vText
 from icalendar.timezone.windows_to_olson import WINDOWS_TO_OLSON
 from pytz import timezone
 
+if version("icalendar") >= "6.0":
+    from icalendar import use_pytz
+    from icalendar.timezone.windows_to_olson import WINDOWS_TO_OLSON
 
-use_pytz()
+    use_pytz()
+else:
+    from icalendar.windows_to_olson import WINDOWS_TO_OLSON
 
 
 def now() -> datetime:
@@ -69,6 +75,7 @@ class Event:
         self.floating: bool = False
         self.status: str | None = None
         self.url: str | None = None
+        self.component: Component | None = None
 
     def time_left(self, time: datetime | None = None) -> timedelta:
         """
@@ -133,6 +140,7 @@ class Event:
             uid = "%s_%d" % (self.uid, randint(0, 1000000))
 
         ne = Event()
+        ne.component = self.component
         ne.summary = self.summary
         ne.description = self.description
         ne.start = new_start
@@ -178,6 +186,8 @@ def create_event(component: Component, strict: bool) -> Event:
     """
 
     event = Event()
+
+    event.component = component
 
     event.start = component.get("dtstart").dt
     # The RFC specifies that the TZID parameter must be specified for datetime or time

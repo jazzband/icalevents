@@ -7,6 +7,7 @@ import pytz
 from dateutil.tz import UTC, gettz
 
 from icalevents import icalevents
+from icalendar.prop import vText
 
 
 class ICalEventsTests(unittest.TestCase):
@@ -348,26 +349,32 @@ class ICalEventsTests(unittest.TestCase):
 
     def test_string_data(self):
         ical = "test/test_data/basic.ics"
-
         with open(ical, mode="rb") as f:
-            string_content = f.read()
+            raw_data = f.read()
 
-        start = date(2017, 5, 18)
-        end = date(2017, 5, 19)
-        key = "basic"
+        for stest, string_content in [
+            ("as bytes", raw_data),
+            ("as str", raw_data.decode()),
+        ]:
+            with self.subTest(stest):
+                start = date(2017, 5, 18)
+                end = date(2017, 5, 19)
+                key = "basic"
 
-        icalevents.request_data(
-            key,
-            url=None,
-            file=None,
-            string_content=string_content,
-            start=start,
-            end=end,
-            fix_apple=False,
-        )
+                icalevents.request_data(
+                    key,
+                    url=None,
+                    file=None,
+                    string_content=string_content,
+                    start=start,
+                    end=end,
+                    fix_apple=False,
+                )
 
-        self.assertTrue(icalevents.all_done(key), "request is finished")
-        self.assertEqual(len(icalevents.latest_events(key)), 2, "two events are found")
+                self.assertTrue(icalevents.all_done(key), "request is finished")
+                self.assertEqual(
+                    len(icalevents.latest_events(key)), 2, "two events are found"
+                )
 
     def test_events_no_description(self):
         ical = "test/test_data/no_description.ics"
@@ -1057,3 +1064,14 @@ class ICalEventsTests(unittest.TestCase):
 
         self.assertIsNot(event.uid, -1)
         self.assertIsInstance(event.uid, str)
+
+    def test_component(self):
+        ical = "test/test_data/cest_every_day_for_one_year.ics"
+        start = date(2020, 1, 1)
+        end = date(2024, 12, 31)
+
+        evs = icalevents.events(file=ical, start=start, end=end)
+        event = evs[0]
+
+        self.assertEqual(str(event.component["X-MICROSOFT-CDO-BUSYSTATUS"]), "BUSY")
+        self.assertIsInstance(event.component["X-MICROSOFT-CDO-BUSYSTATUS"], vText)
