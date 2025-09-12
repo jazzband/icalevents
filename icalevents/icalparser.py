@@ -14,7 +14,6 @@ from dateutil.rrule import rruleset, rrulestr
 from dateutil.tz import UTC, gettz
 from icalendar import Calendar, Timezone
 from icalendar.prop import vDDDLists, vText
-from icalendar.timezone.windows_to_olson import WINDOWS_TO_OLSON
 from pytz import timezone
 
 if version("icalendar") >= "6.0":
