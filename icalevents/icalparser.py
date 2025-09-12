@@ -7,11 +7,12 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, tzinfo as _tzinfo
 from importlib.metadata import version
 from random import randint
+from typing import cast
 from uuid import uuid4
 
 from dateutil.rrule import rruleset, rrulestr
 from dateutil.tz import UTC, gettz
-from icalendar import Calendar, Component, use_pytz
+from icalendar import Calendar, Component, Timezone, use_pytz
 from icalendar.prop import vDDDLists, vText
 from icalendar.timezone.windows_to_olson import WINDOWS_TO_OLSON
 from pytz import timezone
@@ -321,6 +322,8 @@ def parse_events(
         timezones[x_wr_timezone] = get_timezone(x_wr_timezone)
 
     for c in calendar.walk("VTIMEZONE"):
+        # we search for VTIMEZONE so we only get Timezone back
+        c = cast(Timezone, c)
         name = str(c["TZID"])
         try:
             timezones[name] = c.to_tz()
