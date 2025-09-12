@@ -12,17 +12,18 @@ from uuid import uuid4
 
 from dateutil.rrule import rruleset, rrulestr
 from dateutil.tz import UTC, gettz
-from icalendar import Calendar, Component, Timezone, use_pytz
+from icalendar import Calendar, Timezone
 from icalendar.prop import vDDDLists, vText
 from icalendar.timezone.windows_to_olson import WINDOWS_TO_OLSON
 from pytz import timezone
 
 if version("icalendar") >= "6.0":
-    from icalendar import use_pytz
+    from icalendar import Component, use_pytz
     from icalendar.timezone.windows_to_olson import WINDOWS_TO_OLSON
 
     use_pytz()
 else:
+    from icalendar.cal import Component
     from icalendar.windows_to_olson import WINDOWS_TO_OLSON
 
 
