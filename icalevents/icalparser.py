@@ -2,28 +2,31 @@
 Parse iCal data to Events.
 """
 
-from datetime import datetime, timedelta, date
+from __future__ import annotations
+
+from datetime import date, datetime, timedelta, tzinfo as _tzinfo
 from importlib.metadata import version
 from random import randint
-from typing import Optional
+from typing import cast
 from uuid import uuid4
 
-from dateutil.rrule import rrulestr
+from dateutil.rrule import rruleset, rrulestr
 from dateutil.tz import UTC, gettz
-from icalendar import Calendar
+from icalendar import Calendar, Timezone
 from icalendar.prop import vDDDLists, vText
 from pytz import timezone
 
 if version("icalendar") >= "6.0":
-    from icalendar import use_pytz
+    from icalendar import Component, use_pytz
     from icalendar.timezone.windows_to_olson import WINDOWS_TO_OLSON
 
     use_pytz()
 else:
+    from icalendar.cal import Component
     from icalendar.windows_to_olson import WINDOWS_TO_OLSON
 
 
-def now():
+def now() -> datetime:
     """
     Get current time.
 
@@ -33,10 +36,10 @@ def now():
 
 
 class Attendee(str):
-    def __init__(self, address):
+    def __init__(self, address: str) -> None:
         self.address = address
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.address.encode("utf-8").decode("ascii")
 
     @property
@@ -49,33 +52,33 @@ class Event:
     Represents one event (occurrence in case of reoccurring events).
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Create a new event occurrence.
         """
-        self.uid = -1
-        self.summary = None
-        self.description = None
-        self.start = None
-        self.end = None
-        self.all_day = True
-        self.transparent = False
-        self.recurring = False
-        self.location = None
-        self.private = False
-        self.created = None
-        self.last_modified = None
-        self.sequence = None
-        self.recurrence_id = None
-        self.attendee = None
-        self.organizer = None
-        self.categories = None
-        self.floating = None
-        self.status = None
-        self.url = None
-        self.component = None
+        self.uid: str = "-1"
+        self.summary: str | None = None
+        self.description: str | None = None
+        self.start: datetime | None = None
+        self.end: datetime | None = None
+        self.all_day: bool = True
+        self.transparent: bool = False
+        self.recurring: bool = False
+        self.location: str | None = None
+        self.private: bool = False
+        self.created: datetime | None = None
+        self.last_modified: datetime | None = None
+        self.sequence: str | None = None
+        self.recurrence_id: datetime | date | None = None
+        self.attendee: Attendee | list[Attendee] | None = None
+        self.organizer: str | None = None
+        self.categories: list[str | None] = []
+        self.floating: bool = False
+        self.status: str | None = None
+        self.url: str | None = None
+        self.component: Component | None = None
 
-    def time_left(self, time=None):
+    def time_left(self, time: datetime | None = None) -> timedelta:
         """
         timedelta form now to event.
 
@@ -84,7 +87,7 @@ class Event:
         time = time or now()
         return self.start - time
 
-    def __lt__(self, other):
+    def __lt__(self, other: object) -> bool:
         """
         Events are sorted by start time by default.
 
@@ -109,11 +112,10 @@ class Event:
             elif type(self.start) is datetime and type(other.start) is date:
                 return self.start.date() < other.start
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "%s: %s (%s)" % (self.start, self.summary, self.end - self.start)
 
-    def astimezone(self, tzinfo):
-
+    def astimezone(self, tzinfo: _tzinfo) -> Event:
         if type(self.start) is datetime:
             self.start = self.start.astimezone(tzinfo)
 
@@ -122,7 +124,9 @@ class Event:
 
         return self
 
-    def copy_to(self, new_start=None, uid=None):
+    def copy_to(
+        self, new_start: datetime | None = None, uid: str | None = None
+    ) -> Event:
         """
         Create a new event equal to this with new start date.
 
@@ -164,7 +168,7 @@ class Event:
         return ne
 
 
-def encode(value: Optional[vText]) -> Optional[str]:
+def encode(value: vText | None) -> str | None:
     if value is None:
         return None
     try:
@@ -173,7 +177,7 @@ def encode(value: Optional[vText]) -> Optional[str]:
         return str(value.encode("utf-8"))
 
 
-def create_event(component, strict):
+def create_event(component: Component, strict: bool) -> Event:
     """
     Create an event from its iCal representation.
 
@@ -215,13 +219,11 @@ def create_event(component, strict):
     event.location = encode(component.get("location"))
 
     if component.get("attendee"):
-        event.attendee = component.get("attendee")
-        if type(event.attendee) is list:
-            event.attendee = [Attendee(attendee) for attendee in event.attendee]
-        else:
-            event.attendee = Attendee(event.attendee)
-    else:
-        event.attendee = str(None)
+        attendees = component.get("attendee")
+        if type(attendees) is list:
+            event.attendee = [Attendee(attendee) for attendee in attendees]
+        elif attendees:
+            event.attendee = Attendee(attendees)
 
     try:
         event.uid = component.get("uid").encode("utf-8").decode("ascii")
@@ -278,13 +280,13 @@ def create_event(component, strict):
 
 
 def parse_events(
-    content,
-    start=None,
-    end=None,
-    default_span=timedelta(days=7),
-    tzinfo=None,
-    sort=False,
-    strict=False,
+    content: str,
+    start: datetime | None = None,
+    end: datetime | None = None,
+    default_span: timedelta = timedelta(days=7),
+    tzinfo: _tzinfo | None = None,
+    sort: bool = False,
+    strict: bool = False,
 ):
     """
     Query the events occurring in a given time range.
@@ -320,6 +322,8 @@ def parse_events(
         timezones[x_wr_timezone] = get_timezone(x_wr_timezone)
 
     for c in calendar.walk("VTIMEZONE"):
+        # we search for VTIMEZONE so we only get Timezone back
+        c = cast(Timezone, c)
         name = str(c["TZID"])
         try:
             timezones[name] = c.to_tz()
@@ -338,9 +342,9 @@ def parse_events(
         cal_tz = UTC
     # < ==========================================
 
-    found = []
+    found: list[Event] = []
 
-    def is_not_exception(date):
+    def is_not_exception(date: datetime) -> bool:
         exdate = "%04d%02d%02d" % (
             date.year,
             date.month,
@@ -521,7 +525,7 @@ def parse_events(
     return result
 
 
-def parse_rrule(component):
+def parse_rrule(component: Component):
     """
     Extract a dateutil.rrule object from an icalendar component. Also includes
     the component's dtstart and exdate properties. The rdate and exrule
@@ -569,7 +573,7 @@ def parse_rrule(component):
                 conform_until(until, dtstart) for until in rrules[index]["UNTIL"]
             ]
 
-    rule = rrulestr(
+    rule: rruleset = rrulestr(  # type: ignore[assignment]
         "\n".join(x.to_ical().decode() for x in rrules),
         dtstart=dtstart,
         forceset=True,
@@ -599,14 +603,14 @@ def parse_rrule(component):
     return rule
 
 
-def extract_exdates(component):
+def extract_exdates(component: Component) -> list[datetime]:
     """
     Compile a list of all exception dates stored with a component.
 
     :param component: icalendar iCal component
     :return: list of exception dates
     """
-    dates = []
+    dates: list[datetime] = []
     exd_prop = component.get("exdate")
     if isinstance(exd_prop, list):
         for exd_list in exd_prop:
@@ -617,7 +621,7 @@ def extract_exdates(component):
     return dates
 
 
-def get_timezone(tz_name):
+def get_timezone(tz_name: str) -> _tzinfo | None:
     if tz_name in WINDOWS_TO_OLSON:
         return gettz(WINDOWS_TO_OLSON[tz_name])
     else:

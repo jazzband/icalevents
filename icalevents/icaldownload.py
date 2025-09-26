@@ -2,11 +2,15 @@
 Downloads an iCal url or reads an iCal file.
 """
 
+from __future__ import annotations
+
+from contextlib import suppress
+from pathlib import Path
+
 import urllib3
-import logging
 
 
-def apple_data_fix(content):
+def apple_data_fix(content: str) -> str:
     """
     Fix Apple tzdata bug.
 
@@ -16,7 +20,7 @@ def apple_data_fix(content):
     return content.replace("TZOFFSETFROM:+5328", "TZOFFSETFROM:+0053")
 
 
-def apple_url_fix(url):
+def apple_url_fix(url: str) -> str:
     """
     Fix Apple URL.
 
@@ -33,17 +37,14 @@ class ICalDownload:
     Downloads or reads and decodes iCal sources.
     """
 
-    def __init__(self, http=None):
-        # Get logger
-        logger = logging.getLogger()
-
+    def __init__(self, http: urllib3.PoolManager | None = None) -> None:
         # default http connection to use
         if http is None:
             http = urllib3.PoolManager()
 
         self.http = http
 
-    def data_from_url(self, url, apple_fix=False):
+    def data_from_url(self, url: str, apple_fix: bool = False) -> str:
         """
         Download iCal data from URL.
 
@@ -59,16 +60,14 @@ class ICalDownload:
         if not response.data:
             raise ConnectionError("Could not get data from %s!" % url)
 
-        content_type = response.headers.get("content-type")
-
-        try:
-            encoding = content_type.split("charset=")[1]
-        except (AttributeError, IndexError):
-            encoding = "utf-8"
+        encoding = "utf-8"
+        if content_type := response.headers.get("content-type"):
+            with suppress(AttributeError, IndexError):
+                encoding = content_type.split("charset=")[1]
 
         return self.decode(response.data, encoding, apple_fix=apple_fix)
 
-    def data_from_file(self, file, apple_fix=False):
+    def data_from_file(self, file: str | Path, apple_fix: bool = False) -> str:
         """
         Read iCal data from file.
 
@@ -84,14 +83,18 @@ class ICalDownload:
 
         return self.decode(content, apple_fix=apple_fix)
 
-    def data_from_string(self, string_content, apple_fix=False):
+    def data_from_string(
+        self, string_content: bytes | str, apple_fix: bool = False
+    ) -> str:
         if not string_content:
             raise OSError("String content is not readable or is empty!")
 
         return self.decode(string_content, apple_fix=apple_fix)
 
     @staticmethod
-    def decode(content, encoding="utf-8", apple_fix=False):
+    def decode(
+        content: bytes | str, encoding: str = "utf-8", apple_fix: bool = False
+    ) -> str:
         """
         Decode content using the set charset.
 
