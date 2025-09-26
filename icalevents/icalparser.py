@@ -59,8 +59,8 @@ class Event:
         self.uid: str = "-1"
         self.summary: str | None = None
         self.description: str | None = None
-        self.start: datetime
-        self.end: datetime
+        self.start: datetime | None = None
+        self.end: datetime | None = None
         self.all_day: bool = True
         self.transparent: bool = False
         self.recurring: bool = False
@@ -70,7 +70,7 @@ class Event:
         self.last_modified: datetime | None = None
         self.sequence: str | None = None
         self.recurrence_id: datetime | date | None = None
-        self.attendee: Attendee | list[Attendee] | str = ""
+        self.attendee: Attendee | list[Attendee] | None = None
         self.organizer: str | None = None
         self.categories: list[str | None] = []
         self.floating: bool = False
