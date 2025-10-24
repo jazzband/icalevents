@@ -287,7 +287,7 @@ def parse_events(
     tzinfo: _tzinfo | None = None,
     sort: bool = False,
     strict: bool = False,
-):
+) -> list[Event]:
     """
     Query the events occurring in a given time range.
 
