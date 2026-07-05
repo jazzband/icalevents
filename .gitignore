@@ -11,3 +11,4 @@ icalevents.egg-info/*
 
 docs/_build/**
 coverage.xml
+.venv*/
