@@ -9,7 +9,6 @@ import urllib3
 from .icalparser import Event, parse_events
 from .icaldownload import ICalDownload
 
-
 # Lock for event data
 event_lock = Lock()
 # Event data
