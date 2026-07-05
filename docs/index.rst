@@ -34,8 +34,6 @@ Google:
 Example
 =======
 
-see main.py
-
 .. code:: python
 
    from icalevents.icalevents import events_async, latest_events, all_done
